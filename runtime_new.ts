@@ -1,11 +1,13 @@
 import { PC } from "./pc.ts";
 
+type instruction = {function: (this: PC, argv: number[]) => void, args: number}
+
 class Runtime {
     pc: PC = new PC()
-    instructions: ((this: PC, argv: number[]) => void)[] = []
+    instructions: instruction[] = []
     instructionNames: string[] = []
 
-    addInstruction(name: string, instruction: (this: PC, argv: number[]) => void) {
+    addInstruction(name: string, instruction: instruction) {
         this.instructionNames.push(name)
         this.instructions.push(instruction)
     }
@@ -18,7 +20,7 @@ class Runtime {
         if (!instruction)
             throw 'unknown instruction (2)';
         try {
-            instruction.call(this.pc, line)
+            instruction.function.call(this.pc, line)
         } catch (error) {
             console.error(error, 'at', this.pc.programPointer, this.instructionNames[instructionId])
         }
@@ -34,7 +36,7 @@ for (const filename of dir) {
         (await import('./instructions/' + filename.name)).default)
 }
 
-runtime.addInstruction('end', () => { })
+runtime.addInstruction('end', {function: () => { }, args: 0})
 
 const iram = Deno.readFileSync("iram.bin")
 
@@ -52,17 +54,14 @@ while (runtime.pc.mem[runtime.pc.programPointer] != runtime.instructions.length 
     const instruction = runtime.pc.mem[runtime.pc.programPointer]
     runtime.pc.programPointer ++
     const args = [];
-    while (!(
-        runtime.pc.mem[runtime.pc.programPointer] == 0 &&
-        runtime.pc.mem[runtime.pc.programPointer + 1] == 42 &&
-        runtime.pc.mem[runtime.pc.programPointer + 2] == 65535
-    ) && runtime.pc.programPointer < runtime.pc.mem.length && args.length < 5) {
+    console.log(runtime.pc.programPointer, runtime.instructionNames[instruction], instruction, runtime.instructions[instruction])
+    while (args.length < runtime.instructions[instruction].args) {
         args.push(runtime.pc.mem[runtime.pc.programPointer])
         runtime.pc.programPointer++
     }
-    // console.log(runtime.instructionNames[instruction], instruction, args, args.map(a => a.toString(16)), args.map(a => a.toString(2)))
+    console.log(runtime.instructionNames[instruction], instruction, args, args.map(a => a.toString(16)), args.map(a => a.toString(2)))
     runtime.run([instruction, ...args])
-    runtime.pc.programPointer += 3
+    // runtime.pc.programPointer++
     // c++
 }
 

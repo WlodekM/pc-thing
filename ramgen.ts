@@ -32,7 +32,7 @@ for (const element of code) {
         if (!'abc'.split('').includes(arg)) throw 'whar '+arg
         return arg
     })
-    instructions.push([commands.indexOf(command), ...parsedArgs, 0, 42, 65535])
+    instructions.push([commands.indexOf(command), ...parsedArgs])
 }
 
 const instructionAddresses: number[] = [];
@@ -51,7 +51,7 @@ for (const instr of instructions) {
         if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
         return instructionAddresses[+i.replace('$', '')] - 2
     })
-    // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
+    console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
     ram.push(...newInstr)
     i++
 }
