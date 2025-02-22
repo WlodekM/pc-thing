@@ -1,0 +1,2 @@
+deno -A assembler.ts && deno -A runtime.ts to assemble and run
+code in code.a

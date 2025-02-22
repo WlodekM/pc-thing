@@ -1,0 +1,9 @@
+start:
+    mov a -1 ; 65535
+    str a 16
+    #using printer.a
+    jmr print_num
+    mov a 1 ; write
+    mov b 1 ; stdout
+    mov c 32 ; address
+    sys ; syscall

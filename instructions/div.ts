@@ -1,0 +1,5 @@
+import { PC } from "../pc.ts";
+
+export default function(this: PC) {
+    this.registers[2] = Math.floor(this.registers[0] / this.registers[1])
+}
