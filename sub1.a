@@ -1,0 +1,6 @@
+do_the_thing:
+    ld a 0
+    mov b 1
+    sub
+    str c 0
+    ret

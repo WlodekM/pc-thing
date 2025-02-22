@@ -1,3 +1,4 @@
 # the assembled text code
 *.p
 ram.bin
+iram.bin

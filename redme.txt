@@ -1,2 +1,5 @@
-deno -A assembler.ts && deno -A runtime.ts to assemble and run
-code in code.a
+deno -A assembler.ts && deno -A ramgen.ts && hexdump -C iram.bin
+this shit compiles
+
+deno -A runtime_new.ts
+this shit runs

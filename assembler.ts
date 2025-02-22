@@ -1,4 +1,4 @@
-const labels: Record<string, number | string> = {}
+const labels: Record<string, string> = {}
 
 let code = new TextDecoder()
     .decode(Deno.readFileSync('code.a'))
@@ -18,18 +18,33 @@ function processCode(rcode: string, offset: number = 0) {
         const sel = el.split(' ');
         li++;
         if (el.endsWith(":")) {
-            labels[sel[0].replace(/:$/g,'')] = i;
+            labels[sel[0].replace(/:$/g,'')] = '$'+i;
             continue;
         }
         if (sel[0] == '.label') {
             labels[sel[1]] = sel[2];
             continue;
         }
+        i++
+    }
+
+    i = offset;
+    li = 0;
+    while (li < code.length) {
+        let el = code[li];
+        const sel = el.split(' ');
+        li++;
+        if (el.endsWith(":")) {
+            continue;
+        }
+        if (sel[0] == '.label') {
+            continue;
+        }
         if (sel[0] == '#using') {
             const newCode = processCode(new TextDecoder().decode(Deno.readFileSync(sel[1])), i + 1)
             code = [
                 ...code.filter((_, i) => i < li),
-                `jmp ${li+newCode.length-1}`, // skip over included code
+                `jmp $${li+newCode.length-1}`, // skip over included code
                 ...newCode,
                 ...code.filter((_, i) => i >= li)
             ]
@@ -37,7 +52,7 @@ function processCode(rcode: string, offset: number = 0) {
             continue;
         }
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-            el = el.replace(label, labels[label].toString())
+            el = el.replace(label, labels[label])
         }
         result.push(el)
         i++
@@ -45,7 +60,7 @@ function processCode(rcode: string, offset: number = 0) {
     return result
 }
 
-const result = processCode(code)
+const result = processCode(code+'\nend')
 
 // console.log(labels)
 

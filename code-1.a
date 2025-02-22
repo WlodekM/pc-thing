@@ -1,0 +1,6 @@
+start:
+    mov a 42
+    str a 0
+    #using sub1.a
+    jmr do_the_thing
+    ld a 0
