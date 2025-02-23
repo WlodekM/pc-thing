@@ -49,7 +49,7 @@ for (const instr of instructions) {
         if (typeof i !== 'string') return i;
         if (!i.startsWith('$')) return i.charCodeAt(0);
         if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
-        return instructionAddresses[+i.replace('$', '')] - 2
+        return instructionAddresses[+i.replace('$', '')]
     })
     console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
     ram.push(...newInstr)

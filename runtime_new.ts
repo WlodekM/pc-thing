@@ -50,11 +50,14 @@ runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<
 runtime.pc.programPointer = 65534 / 2 + 1
 
 // let c = 0
-while (runtime.pc.mem[runtime.pc.programPointer] != runtime.instructions.length - 1 && runtime.pc.programPointer != 0xFFFF) {
+while (
+    runtime.pc.mem[runtime.pc.programPointer] != runtime.instructions.length - 1 &&
+    runtime.pc.programPointer != 0xFFFF) {
     const instruction = runtime.pc.mem[runtime.pc.programPointer]
+    console.log(runtime.pc.mem[runtime.pc.programPointer-1],runtime.pc.mem[runtime.pc.programPointer],runtime.pc.mem[runtime.pc.programPointer+1])
+    console.log(runtime.pc.programPointer, runtime.instructionNames[instruction], instruction, runtime.instructions[instruction])
     runtime.pc.programPointer ++
     const args = [];
-    console.log(runtime.pc.programPointer, runtime.instructionNames[instruction], instruction, runtime.instructions[instruction])
     while (args.length < runtime.instructions[instruction].args) {
         args.push(runtime.pc.mem[runtime.pc.programPointer])
         runtime.pc.programPointer++
