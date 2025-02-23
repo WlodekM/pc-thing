@@ -1,0 +1,24 @@
+.macro store(reg, val, addr) put $reg $val\nstr $reg $addr
+
+start:
+    .label width 4
+
+    .label grid_start 16
+    .label tmp1 0
+    .label tmp2 1
+    .label tmp3 2
+    .label tmp4 3
+
+    store a 4 tmp1 ; x
+    store a 4 tmp2 ; y
+    grid_loop:
+        ld a tmp2
+        mov b width
+        mul
+        ld a grid_start
+        swp c b
+        add
+        swp c b
+        ld b tmp1
+        add
+        
