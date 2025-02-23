@@ -274,6 +274,8 @@ reads data from file descriptor fd and puts it in ram, starting with addr, the d
 
 the most common file descriptor you'll see is 0, stdin
 
+also sets register `a` to the length of the read input
+
 ### write (1)
 
 ```

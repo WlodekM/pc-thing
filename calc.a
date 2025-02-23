@@ -1,0 +1,66 @@
+.label len 1
+
+jmp start
+read_input:
+    mov a 0
+    mov b 0
+    mov c 64
+    sys
+    mov b 1
+    sub
+    str c len
+    ret
+
+str_to_num:
+    ; pointer to current character
+    .label ptr 2
+    ld a len
+    mov b 63
+    add
+    str c ptr
+    .label mult 3
+    mov a 1
+    str a mult
+    .label num 4
+    .label zero 48
+    stm_loop:
+        ;load char, subtract zero, multiply by 10
+        ld b ptr
+        ldr a b
+        mov b zero
+        sub
+        swp c a
+        ld b mult
+        mul
+
+        ; add to num
+        swp c b
+        ld a num
+        add
+        str c num
+
+        ld a mult
+        mov b 10
+        mul
+        str c mult
+
+        ; move pointer
+        ld a ptr
+        mov b 1
+        sub
+        str c ptr
+        cmp c 63
+        jz stm_loop
+    ret
+
+start:
+    jmr read_input
+    jmr str_to_num
+    ld a 4 ; load number from read
+    str a 16 ; put our number into 16
+    #using printer.a
+    jmr print_num ; print number at 16 (well not print but stringify)
+    mov a 1 ; write
+    mov b 1 ; stdout
+    mov c 32 ; address
+    sys ; syscall

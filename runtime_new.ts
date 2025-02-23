@@ -52,7 +52,7 @@ runtime.pc.programPointer = 65534 / 2 + 1
 // let c = 0
 while (
     runtime.pc.mem[runtime.pc.programPointer] != runtime.instructions.length - 1 &&
-    runtime.pc.programPointer != 0xFFFF) {
+    runtime.pc.programPointer != 0xFFFF - 1) {
     const instruction = runtime.pc.mem[runtime.pc.programPointer]
     runtime.pc.programPointer ++
     const args = [];

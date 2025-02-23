@@ -1,7 +1,7 @@
 const labels: Record<string, string> = {}
 
 const code = new TextDecoder()
-    .decode(Deno.readFileSync('code.a'))
+    .decode(Deno.readFileSync(Deno.args[0] ?? 'code.a'))
 
 function processCode(rcode: string, offset: number = 0) {
     let code: string[] = rcode
@@ -44,7 +44,7 @@ function processCode(rcode: string, offset: number = 0) {
             const newCode = processCode(new TextDecoder().decode(Deno.readFileSync(sel[1])), i + 1)
             code = [
                 ...code.filter((_, i) => i < li),
-                `jmp $${li+newCode.length-1}`, // skip over included code
+                `jmp $${i+newCode.length+1}`, // skip over included code
                 ...newCode,
                 ...code.filter((_, i) => i >= li)
             ]

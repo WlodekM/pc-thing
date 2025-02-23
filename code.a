@@ -1,8 +1,8 @@
 start:
     mov a -1 ; 65535
-    str a 16
+    str a 16 ; put our number into 16
     #using printer.a
-    jmr print_num
+    jmr print_num ; print number at 16 (well not print but stringify)
     mov a 1 ; write
     mov b 1 ; stdout
     mov c 32 ; address
