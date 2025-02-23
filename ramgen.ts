@@ -10,7 +10,7 @@ for (const filename of dir) {
 
 commands.push('end')
 
-console.log(commands, commands.length, (commands.length - 1).toString(16))
+// console.log(commands, commands.length, (commands.length - 1).toString(16))
 
 const code = new TextDecoder().decode(Deno.readFileSync('code.p')).split('\n')
 
@@ -51,7 +51,7 @@ for (const instr of instructions) {
         if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
         return instructionAddresses[+i.replace('$', '')]
     })
-    console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
+    // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
     ram.push(...newInstr)
     i++
 }
