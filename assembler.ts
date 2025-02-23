@@ -36,6 +36,7 @@ function processCode(rcode: string, offset: number = 0) {
     while (li < code.length) {
         let el = code[li];
         const sel = el.split(' ');
+        if (aliases[sel[0]]) el = el.replace(sel[0], aliases[sel[0]])
         li++;
         if (el.endsWith(":")) {
             continue;
@@ -57,7 +58,6 @@ function processCode(rcode: string, offset: number = 0) {
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
             el = el.replace(label, labels[label])
         }
-        if (aliases[sel[0]]) sel[0] = aliases[sel[0]]
         result.push(el)
         i++
     }

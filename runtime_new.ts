@@ -56,7 +56,7 @@ while (
     const instruction = runtime.pc.mem[runtime.pc.programPointer]
     runtime.pc.programPointer ++
     const args = [];
-    console.debug(runtime.pc.programPointer, instruction, runtime.instructionNames[instruction], runtime.pc.mem[runtime.pc.programPointer+1])
+    // console.debug(runtime.pc.programPointer, instruction, runtime.instructionNames[instruction], runtime.pc.mem[runtime.pc.programPointer+1])
     while (args.length < runtime.instructions[instruction].args) {
         args.push(runtime.pc.mem[runtime.pc.programPointer])
         runtime.pc.programPointer++
