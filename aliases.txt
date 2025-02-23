@@ -1,0 +1,2 @@
+jsr=jmr
+mov=put

@@ -3,6 +3,9 @@ const labels: Record<string, string> = {}
 const code = new TextDecoder()
     .decode(Deno.readFileSync(Deno.args[0] ?? 'code.a'))
 
+const aliases = Object.fromEntries(new TextDecoder()
+    .decode(Deno.readFileSync('aliases.txt')).split('\n').map(a=>a.split('=')))
+
 function processCode(rcode: string, offset: number = 0) {
     let code: string[] = rcode
         .split('\n')
@@ -54,6 +57,7 @@ function processCode(rcode: string, offset: number = 0) {
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
             el = el.replace(label, labels[label])
         }
+        if (aliases[sel[0]]) sel[0] = aliases[sel[0]]
         result.push(el)
         i++
     }

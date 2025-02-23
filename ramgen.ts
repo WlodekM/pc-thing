@@ -49,6 +49,7 @@ for (const instr of instructions) {
         if (typeof i !== 'string') return i;
         if (!i.startsWith('$')) return i.charCodeAt(0);
         if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
+        console.log(i, instructionAddresses[+i.replace('$', '')])
         return instructionAddresses[+i.replace('$', '')]+1
     })
     // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
