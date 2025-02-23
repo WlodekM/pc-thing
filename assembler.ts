@@ -1,6 +1,6 @@
 const labels: Record<string, string> = {}
 
-let code = new TextDecoder()
+const code = new TextDecoder()
     .decode(Deno.readFileSync('code.a'))
 
 function processCode(rcode: string, offset: number = 0) {
@@ -14,7 +14,7 @@ function processCode(rcode: string, offset: number = 0) {
     let i = offset;
     let li = 0;
     while (li < code.length) {
-        let el = code[li];
+        const el = code[li];
         const sel = el.split(' ');
         li++;
         if (el.endsWith(":")) {
