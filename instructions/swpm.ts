@@ -4,7 +4,6 @@ export default {
     function(this: PC, [reg1, reg2]: number[]) {
         const addr1 = this.registers[this.lib.parseReg(reg1)]
         const addr2 = this.registers[this.lib.parseReg(reg2)]
-        console.debug(addr1, addr2)
         if (Number(addr1) > this.mem.length || Number(addr1) < 0 || Number.isNaN(Number(addr1)))
             throw 'Invalid address'
         if (Number(addr2) > this.mem.length || Number(addr2) < 0 || Number.isNaN(Number(addr2)))

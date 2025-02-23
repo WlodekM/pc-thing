@@ -22,6 +22,8 @@ str_to_num:
     mov a 1
     str a mult
     .label num 4
+    mov a 0
+    str a num
     .label zero 48
     stm_loop:
         ;load char, subtract zero, multiply by 10
@@ -56,8 +58,14 @@ str_to_num:
 start:
     jmr read_input
     jmr str_to_num
+    ld a 4
+    str a 8 ; store number 1 to 8
+    jmr read_input
+    jmr str_to_num
     ld a 4 ; load number from read
-    str a 16 ; put our number into 16
+    ld b 8
+    add
+    str c 16 ; put our number into 16
     #using printer.a
     jmr print_num ; print number at 16 (well not print but stringify)
     mov a 1 ; write
