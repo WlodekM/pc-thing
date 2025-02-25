@@ -18,18 +18,11 @@ function processCode(rcode: string, offset: number = 0) {
 
     let i = offset;
     let li = 0;
+    //parse macros
     while (li < code.length) {
         const el = code[li];
         const sel = el.split(' ');
         li++;
-        if (el.endsWith(":")) {
-            labels[sel[0].replace(/:$/g,'')] = '$'+i;
-            continue;
-        }
-        if (sel[0] == '.label') {
-            labels[sel[1]] = sel[2];
-            continue;
-        }
         if (sel[0] == '.macro') {
             sel.shift();
             let tx = sel.join(' ');
@@ -38,16 +31,44 @@ function processCode(rcode: string, offset: number = 0) {
             tx = tx.replace(pattern, '').replaceAll('\\n', '\n');
             if (!match || !match[2]) throw 'knives at you'
             const args = match[2].split(/,\s*/g)
-            console.log(args, '-', match[1], '-', tx)
             macros[match[1]] = (args_: string[]) => {
                 let s = tx;
                 let i = 0
                 for (const a of args_) {
-                    s = s.replaceAll(args[i], a)
+                    s = s.replaceAll('$'+args[i], a)
                     i++
                 }
                 return s
             }
+            continue;
+        }
+        i++
+    }
+
+    // parse other
+    i = offset;
+    li = 0;
+    while (li < code.length) {
+        const el = code[li];
+        const sel = el.split(' ');
+        li++;
+        if (el.endsWith(":")) {
+            console.log(sel[0], i)
+            labels[sel[0].replace(/:$/g,'')] = '$'+i;
+            continue;
+        }
+        if (sel[0] == '.label') {
+            labels[sel[1]] = sel[2];
+            continue;
+        }
+        if (macros[sel[0]]) {
+            const macro = macros[sel[0]]
+            sel.shift()
+            const r = macro(sel).split('\n')
+            i+=r.length
+            continue;
+        }
+        if (sel[0] == '.macro') {
             continue;
         }
         i++
@@ -63,7 +84,11 @@ function processCode(rcode: string, offset: number = 0) {
         if (macros[sel[0]]) {
             const macro = macros[sel[0]]
             sel.shift()
-            const r = macro(sel).split('\n')
+            let rr = macro(sel)
+            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
+                rr = rr.replace(label, labels[label])
+            }
+            const r = rr.split('\n')
             result.push(...r)
             i+=r.length
             continue;
