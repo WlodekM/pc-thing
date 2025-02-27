@@ -32,6 +32,7 @@ table of contents:
  - [SYS](#sys)
     + [read (0)](#read-0)
     + [write (1)](#read-1)
+    + [set raw (2)](#set-raw-2)
  - [XOR](#xor)
 
 ## ADD
@@ -341,6 +342,8 @@ sys (syscall_id) (...args)
 
 syscall, used for interacting with the system
 
+NOTE: the arguments for the syscall are stored in the registers `a` `b` and `c`, not in the instruction call
+
 syscalls:
 
 ### read (0)
@@ -362,6 +365,14 @@ sys 1 (fd) (addr)
 ```
 
 write data starting from addr (null-terminated) into file descriptor fd
+
+### set raw (2)
+
+```
+sys 1 (raw?)
+```
+
+set tty raw mode
 
 ## XOR
 
