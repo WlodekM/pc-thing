@@ -42,6 +42,10 @@ export default {
                         throw 'unknown fd'
                 }
                 break;
+            
+            case 2:
+                Deno.stdin.setRaw(this.registers[1] ? true : false);
+                break;
 
             default:
                 throw 'unknown syscall id ' + this.registers[0]

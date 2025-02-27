@@ -2,8 +2,10 @@
 
 table of contents:
  - [ADD](#add)
+ - [AnD](#and)
  - [CMP](#cmp)
  - [CMR](#cmr)
+ - [CRR](#crr)
  - [DBG](#dbg)
  - [DIV](#div)
  - [JMP](#jmp)
@@ -17,6 +19,8 @@ table of contents:
  - [MOD](#mod)
  - [MOV](#mov)
  - [MUL](#mul)
+ - [NOT](#not)
+ - [OR](#or)
  - [PUT](#put)
  - [RET](#ret)
  - [SRM](#srm)
@@ -28,6 +32,7 @@ table of contents:
  - [SYS](#sys)
     + [read (0)](#read-0)
     + [write (1)](#read-1)
+ - [XOR](#xor)
 
 ## ADD
 
@@ -39,6 +44,17 @@ add
 ```
 
 adds registers `a` and `b` and puts the output in `c`
+
+## AND
+
+bitwise and
+
+usage:
+```
+and
+```
+
+bitwise and's registers `a` and `b` and puts the output in `c`
 
 ## CMP
 
@@ -61,6 +77,17 @@ cmr (reg1) (reg2)
 ```
 
 compares reg1 and reg2, if equal, sets return flag to 1, else sets it to 0
+
+## CRR
+
+compare register register
+
+usage:
+```
+cmr (reg1) (reg2) (reg3)
+```
+
+compares reg2 and reg3, if equal, sets reg1 1, else sets it to 0
 
 ## DBG
 
@@ -198,6 +225,28 @@ mul
 
 multiplies `a` by `b` and stores in `c`
 
+## NOT
+
+bitwise not
+
+usage:
+```
+not
+```
+
+bitwise not's register `a` and puts the output in `c`
+
+## OR
+
+bitwise or
+
+usage:
+```
+or
+```
+
+bitwise or's registers `a` and `b` and puts the output in `c`
+
 ## PUT
 
 put
@@ -313,3 +362,14 @@ sys 1 (fd) (addr)
 ```
 
 write data starting from addr (null-terminated) into file descriptor fd
+
+## XOR
+
+bitwise exclusive or
+
+usage:
+```
+xor
+```
+
+bitwise xor's registers `a` and `b` and puts the output in `c`
