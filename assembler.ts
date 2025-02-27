@@ -12,7 +12,7 @@ function processCode(rcode: string, offset: number = 0) {
     let code: string[] = rcode
         .split('\n')
         .map(l => l.trim())
-        .map(l => l.replace(/\s*;.*$/gm, ''))
+        .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
         .filter(l => l);
     const result = []
 

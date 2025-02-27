@@ -22,6 +22,16 @@ const instructions = []
 
 for (const element of code) {
     const [command, ...args] = element.split(' ');
+    switch (command) {
+        case '.hex':
+            instructions.push([parseInt(args[0], 16)]);
+            continue;
+        // deno-lint-ignore no-case-declarations
+        case '.str':
+            const str = [...element.matchAll(/"(.*?)(?<!\\)"/g)][0][1].replaceAll('\\"', '"')
+            instructions.push(new Array(str.length).fill(0).map((_, i) => str.charCodeAt(i)));
+            continue;
+    }
     const parsedArgs = args.map(arg => {
         if (arg.startsWith('$')) return arg // line numbers can pass
         if (!isNaN(+arg)) {
