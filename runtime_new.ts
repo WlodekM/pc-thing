@@ -53,19 +53,27 @@ runtime.pc.programPointer = 65534 / 2 + 1
 while (
     runtime.pc.mem[runtime.pc.programPointer] != runtime.instructions.length - 1 &&
     runtime.pc.programPointer != 0xFFFF - 1) {
-    const instruction = runtime.pc.mem[runtime.pc.programPointer]
-    runtime.pc.programPointer ++
-    const args = [];
-    // console.debug(runtime.pc.programPointer, instruction, runtime.instructionNames[instruction], runtime.pc.mem[runtime.pc.programPointer+1])
-    while (args.length < runtime.instructions[instruction].args) {
-        args.push(runtime.pc.mem[runtime.pc.programPointer])
-        runtime.pc.programPointer++
+    try {
+        const instruction = runtime.pc.mem[runtime.pc.programPointer]
+        runtime.pc.programPointer ++
+        const args = [];
+        if (Deno.args.includes('-d'))
+        console.debug(runtime.pc.programPointer, instruction, runtime.instructionNames[instruction], runtime.pc.mem[runtime.pc.programPointer+1])
+        while (args.length < runtime.instructions[instruction].args) {
+            args.push(runtime.pc.mem[runtime.pc.programPointer])
+            runtime.pc.programPointer++
+        }
+        runtime.run([instruction, ...args])
+        // runtime.pc.programPointer++
+        // c++
+    } catch (error) {
+        console.error(error);
+        break;
     }
-    runtime.run([instruction, ...args])
-    // runtime.pc.programPointer++
-    // c++
 }
 
+if (Deno.args.includes('-d'))
+    console.debug(Object.fromEntries(runtime.instructions.map((_, i) => [i, runtime.instructionNames[i]])),)
 console.debug('end of execution, dumping ram', runtime.pc.mem)
 Deno.writeFileSync('ram.bin', Uint8Array.from(runtime.pc.mem.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
 new Deno.Command('hexdump', {
