@@ -1,4 +1,34 @@
 # instructions
+
+table of contents:
+ - [ADD](#add)
+ - [CMP](#cmp)
+ - [CMR](#cmr)
+ - [DBG](#dbg)
+ - [DIV](#div)
+ - [JMP](#jmp)
+ - [JMR](#jmr)
+ - [JNZ](#jnz)
+ - [JNZR](#jnzr)
+ - [JZ](#jz)
+ - [LD](#ld)
+ - [LDM](#ldm)
+ - [LDR](#ldr)
+ - [MOD](#mod)
+ - [MOV](#mov)
+ - [MUL](#mul)
+ - [PUT](#put)
+ - [RET](#ret)
+ - [SRM](#srm)
+ - [SRR](#srr)
+ - [STR](#str)
+ - [SUB](#sub)
+ - [SWP](#swp)
+ - [SWPM](#swpm)
+ - [SYS](#sys)
+    + [read (0)](#read-0)
+    + [write (1)](#read-1)
+
 ## ADD
 
 add
