@@ -1,24 +1,156 @@
 .macro store(reg, val, addr) put $reg $val\nstr $reg $addr
+.macro storer(reg, val, addr) put $reg $val\nsrr $reg $addr
+
+jmp start
+get_coord:
+    ld a tmp2              ; Y(0-4) -> a
+    mov b width            ; width (5) -> b
+    mul                    ; Y(0-4) * width (5)
+
+    mov a grid_start       ; grid start address -> a
+    swp c b                ; (offset from y) -> b
+    add                    ; offsetY + gridStart
+    swp c a                ; -> a
+    ld b tmp1              ; X(0-4) -> b
+    add                    ; loc + X
+
+    str c tmp3             ; location -> tmp3
+    ret
 
 start:
-    .label width 4
+    .label width 5
 
     .label grid_start 16
+    ; temp vars
     .label tmp1 0
     .label tmp2 1
     .label tmp3 2
     .label tmp4 3
 
-    store a 4 tmp1 ; x
-    store a 4 tmp2 ; y
+    .label px 64
+    .label py 65
+    store a 2 px
+    store a 2 py
+
+    store a 0 tmp1 ; x
+    store a 0 tmp2 ; y
     grid_loop:
-        ld a tmp2
-        mov b width
-        mul
-        ld a grid_start
-        swp c b
-        add
-        swp c b
-        ld b tmp1
-        add
-        
+        ;get coord
+            jmr get_coord
+        ;store tile
+            storer a 46 c
+        ;loop
+            mov a width
+            mov b 1
+            sub
+            ld a tmp1              ; X(0-4) -> a
+            cmr a c                ; X(0-4) == width
+            jnz ifz                ; go to ifz if X(0-4) == width (5)
+            ifnz:                  ; X is not 0
+                ld a tmp1          ; X -> a
+                mov b 1            ; 1 -> b
+                add                ; X + 1
+                str c tmp1         ; X = X + 1
+                jmp continue_loop  ; continue
+            ifz:                   ; X is 0
+                store a 0 tmp1     ; set X to 1
+                ld a tmp2          ; Y(0-4) -> a
+                mov b 1            ; 1 -> b
+                add                ; c = Y + 1
+                str c tmp2         ; Y = c
+                jmp continue_loop  ; continue
+            continue_loop:
+                ; place tile
+                    ld b tmp3      ; location -> b
+                    storer a 46 b  ; store 46 at address of b
+                mov a width
+                mov b 0
+                sub
+                ld a tmp2          ; get Y (0-4)
+                cmr a c            ; Y == width+1 ?
+                jz grid_loop       ; if not, continue
+    ; escaped
+    jmr print
+    dbg 51
+    halt
+
+print:
+    mov a clear
+    mov b 1
+    sub
+    ; mov c clear
+    mov a 1
+    mov b 1
+    sys
+    store a 0 tmp1 ; x
+    store a 0 tmp2 ; y
+    print_loop:
+        ;get coord
+            jmr get_coord
+        ; get tile
+            ld a tmp3
+            ldr b a
+            str b 128
+            store a 0 129
+
+            ;TODO - make player tile be a @ or something
+            ld a tmp1 ; x
+            ld b px   ; player x
+            crr c a b
+            str c tmp4
+            ld a tmp2 ; y
+            ld b py   ; player y
+            crr b a b
+            ld a tmp4
+            and
+            cmp c 1
+            jz print_normal
+                store a 64 128
+            print_normal:
+                ; print
+                mov a 1
+                mov b 1
+                mov c 128
+                sys
+                ; ld c 128
+                ; dbg a
+        ;loop
+            mov a width
+            mov b 1
+            sub
+            ld a tmp1              ; X(0-4) -> a
+            cmr a c                ; X(0-4) == width
+            jnz p_ifz              ; go to ifz if X(0-4) == width
+            p_ifnz:                ; X is not 0
+                ld a tmp1          ; X -> a
+                mov b 1            ; 1 -> b
+                add                ; X + 1
+                str c tmp1         ; X = X + 1
+                jmp continue_ploop ; continue
+            p_ifz:                 ; X is 0
+                store a 10 128
+                store a 0 129
+                mov a 1
+                mov b 1
+                mov c 128
+                sys
+                store a 0 tmp1     ; set X to 1
+                ld a tmp2          ; Y(0-4) -> a
+                mov b 1            ; 1 -> b
+                add                ; c = Y + 1
+                str c tmp2         ; Y = c
+                jmp continue_ploop ; continue
+            continue_ploop:
+                mov a width
+                mov b 0
+                sub
+                ld a tmp2          ; get Y (0-4)
+                cmr a c            ; Y == width+1 ?
+                jz print_loop      ; if not, continue
+    ret
+clear:
+.hex 1b
+.str "[2J"
+.hex 1b
+.str "[0;0H"
+.hex 0
