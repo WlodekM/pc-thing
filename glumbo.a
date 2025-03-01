@@ -1,5 +1,9 @@
-.macro store(reg, val, addr) put $reg $val\nstr $reg $addr
-.macro storer(reg, val, addr) put $reg $val\nsrr $reg $addr
+.macro store(reg, val, addr) \
+    put @reg @val\
+    str @reg @addr
+.macro storer(reg, val, addr) \
+    put @reg @val\
+    srr @reg @addr
 
 jmp start
 get_coord:
@@ -29,11 +33,15 @@ start:
 
     .label px 64
     .label py 65
+    .label inp 128
     store a 2 px
     store a 2 py
 
     store a 0 tmp1 ; x
     store a 0 tmp2 ; y
+    mov a 2
+    mov b 1
+    sys
     grid_loop:
         ;get coord
             jmr get_coord
@@ -70,9 +78,84 @@ start:
                 cmr a c            ; Y == width+1 ?
                 jz grid_loop       ; if not, continue
     ; escaped
-    jmr print
-    dbg 51
-    halt
+    main_loop:
+        jmr print
+        ; get input
+            mov a 0
+            mov b 0
+            mov c inp
+            sys
+            jmr parse_input
+        jmp main_loop
+
+parse_input:
+    .macro case(addr, val, ln) \
+        ld a @addr\
+        cmp a @val\
+        jnz @ln
+    .macro break() jmp default
+
+    case inp 119 case_w
+    case inp 115 case_s
+    case inp 97 case_a
+    case inp 100 case_d
+
+    case inp 99 case_c
+    case inp 3 case_c
+    break
+
+    case_w:
+        ld a py
+        cmp a 0
+        jnz default
+        mov b 1
+        sub
+        str c py
+        break
+    
+    case_s:
+        ; width-1
+            mov a width
+            mov b 1
+            sub
+
+        ld a py
+        cmr a c
+        jnz default
+        mov b 1
+        add
+        str c py
+        break
+    
+    case_a:
+        ld a px
+        cmp a 0
+        jnz default
+        mov b 1
+        sub
+        str c px
+        break
+    
+    case_d:
+        ; width-1
+            mov a width
+            mov b 1
+            sub
+
+        ld a px
+        cmr a c
+        jnz default
+        mov b 1
+        add
+        str c px
+        break
+    
+    case_c:
+        halt
+        break
+
+    default:
+        ret
 
 print:
     mov a clear
