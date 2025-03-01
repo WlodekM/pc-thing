@@ -13,7 +13,16 @@ function processCode(rcode: string, offset: number = 0) {
         .split('\n')
         .map(l => l.trim())
         .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
-        .filter(l => l);
+        .filter(l => l)
+        .reduce((acc, l) => {
+            if (acc[acc.length - 1] && acc[acc.length - 1].endsWith('\\')) {
+                acc[acc.length - 1] = acc[acc.length - 1].slice(0, -1) + '\n'
+                acc[acc.length - 1] += l
+                return acc
+            }
+            acc.push(l)
+            return acc
+        }, [] as string[]);
     const result = []
 
     let i = offset;
@@ -29,13 +38,13 @@ function processCode(rcode: string, offset: number = 0) {
             const pattern = /([A-z\-_0-9]+)\((.*?)\)\s*/g
             const match = [...tx.matchAll(pattern)][0]
             tx = tx.replace(pattern, '').replaceAll('\\n', '\n');
-            if (!match || !match[2]) throw 'knives at you'
-            const args = match[2].split(/,\s*/g)
+            if (!match) throw 'knives at you'
+            const args = (match[2] ?? '').split(/,\s*/g)
             macros[match[1]] = (args_: string[]) => {
                 let s = tx;
                 let i = 0
                 for (const a of args_) {
-                    s = s.replaceAll('$'+args[i], a)
+                    s = s.replaceAll('@'+args[i], a)
                     i++
                 }
                 return s
@@ -114,7 +123,7 @@ function processCode(rcode: string, offset: number = 0) {
             continue;
         }
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-            el = el.replace(label, labels[label])
+            el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
         }
         result.push(el)
         i++
