@@ -2,7 +2,7 @@
 
 table of contents:
  - [ADD](#add)
- - [AnD](#and)
+ - [AND](#and)
  - [CMP](#cmp)
  - [CMR](#cmr)
  - [CRR](#crr)
