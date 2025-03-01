@@ -1,3 +1,5 @@
+; GLUMBO - the 2d game thing
+
 .macro store(reg, val, addr) \
     put @reg @val\
     str @reg @addr
@@ -22,18 +24,20 @@ get_coord:
     ret
 
 start:
-    .label width 5
+    .label width 20
+    .label height 10
 
-    .label grid_start 16
+    .label grid_start 512
     ; temp vars
     .label tmp1 0
     .label tmp2 1
     .label tmp3 2
     .label tmp4 3
+    .label tmp5 4
 
-    .label px 64
-    .label py 65
-    .label inp 128
+    .label px 16
+    .label py 17
+    .label inp 256
     store a 2 px
     store a 2 py
 
@@ -46,37 +50,68 @@ start:
         ;get coord
             jmr get_coord
         ;store tile
-            storer a 46 c
-        ;loop
-            mov a width
-            mov b 1
+            ; storer a 46 c
+        ;main loop stuff
+        ; place tile
+            ; get X % (width - 1) to check if on x edge
+                store a 46 tmp4
+                mov a width         ; width -> A
+                mov b 1             ; 1 -> b
+                sub                 ; c = width - 1
+                swp c b             ; -> b
+                ld a tmp1           ; x -> a
+                mod                 ; c = x % (w - 1)
+                mov a 0             ;
+                crr c c a           ; c = c == 0?
+                str c tmp5          ; c -> tmp5
+
+            ; Y % (height - 1 )
+                mov a height        ; height -> A
+                mov b 1             ; 1 -> b
+                sub                 ; c = height - 1
+                swp c b             ; -> b
+                ld a tmp2           ; x -> a
+                mod                 ; c = x % (w - 1)
+                mov a 0
+                crr a c a           ; a = c == 0?
+
+            ld b tmp5
+            or
+            cmp c 1
+
+            jz do_the_store     ; edge ? continue : jmp do_the_store
+            store a 35 tmp4     ; store 35 at tmp4
+            do_the_store:
+                ld b tmp3       ; location -> b
+                ld a tmp4       ; tmp4 (character) -> a
+                srr a b         ; store the tile
+        ;;;;;;;;;;;;;;;;;;;;;;;;;
+        mov a width             ; width -> a
+        mov b 1                 ; 1 -> b
+        sub                     ; c = width - 1
+        ld a tmp1               ; X(0-4) -> a
+        cmr a c                 ; X(0-4) == width
+        jnz ifz                 ; go to ifz if X(0-4) == width (5)
+        ifnz:                   ; X is not 0
+            ld a tmp1           ; X -> a
+            mov b 1             ; 1 -> b
+            add                 ; X + 1
+            str c tmp1          ; X = X + 1
+            jmp continue_loop   ; continue
+        ifz:                    ; X is 0
+            store a 0 tmp1      ; set X to 1
+            ld a tmp2           ; Y(0-4) -> a
+            mov b 1             ; 1 -> b
+            add                 ; c = Y + 1
+            str c tmp2          ; Y = c
+            jmp continue_loop   ; continue
+        continue_loop:
+            mov a height
+            mov b 0
             sub
-            ld a tmp1              ; X(0-4) -> a
-            cmr a c                ; X(0-4) == width
-            jnz ifz                ; go to ifz if X(0-4) == width (5)
-            ifnz:                  ; X is not 0
-                ld a tmp1          ; X -> a
-                mov b 1            ; 1 -> b
-                add                ; X + 1
-                str c tmp1         ; X = X + 1
-                jmp continue_loop  ; continue
-            ifz:                   ; X is 0
-                store a 0 tmp1     ; set X to 1
-                ld a tmp2          ; Y(0-4) -> a
-                mov b 1            ; 1 -> b
-                add                ; c = Y + 1
-                str c tmp2         ; Y = c
-                jmp continue_loop  ; continue
-            continue_loop:
-                ; place tile
-                    ld b tmp3      ; location -> b
-                    storer a 46 b  ; store 46 at address of b
-                mov a width
-                mov b 0
-                sub
-                ld a tmp2          ; get Y (0-4)
-                cmr a c            ; Y == width+1 ?
-                jz grid_loop       ; if not, continue
+            ld a tmp2           ; get Y (0-4)
+            cmr a c             ; Y == height+1 ?
+            jz grid_loop        ; if not, continue
     ; escaped
     main_loop:
         jmr print
