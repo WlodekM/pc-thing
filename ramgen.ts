@@ -1,3 +1,5 @@
+import { PC } from "./pc.ts";
+const pc = new PC()
 // TODO - finish this maybe
 
 const commands = []
@@ -43,7 +45,9 @@ for (const element of code) {
         if (!'abc'.split('').includes(arg)) throw 'whar '+arg
         return arg
     })
-    instructions.push([commands.indexOf(command), ...parsedArgs])
+    const inst = Object.entries(pc.instructions).find(([_, b]) => b == command);
+    if (!inst) throw 'erm,, what the sigma ' + command + ' (' + inst + ')'
+    instructions.push([+inst[0], ...parsedArgs])
 }
 
 const instructionAddresses: number[] = [];
