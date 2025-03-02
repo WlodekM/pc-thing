@@ -56,7 +56,7 @@ function gotoInterrupt() {
     runtime.pc.programPointer = runtime.pc.mem[65536 / 2 - 1]
 }
 
-const interruptInterval = setInterval(gotoInterrupt, 10)
+// const interruptInterval = setInterval(gotoInterrupt, 10)
 
 const endInst = (Object.entries(runtime.pc.instructions) as [unknown, string][] as [number, string][])
     .find(([_, b]: [number, string]) => b == 'end')
@@ -90,7 +90,7 @@ while (
     }
 }
 
-clearInterval(interruptInterval)
+// clearInterval(interruptInterval)
 
 if (Deno.args.includes('-d'))
     console.debug(Object.values(runtime.pc.instructions))
