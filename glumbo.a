@@ -193,12 +193,9 @@ parse_input:
         ret
 
 print:
-    mov a clear
-    mov b 1
-    sub
-    ; mov c clear
     mov a 1
     mov b 1
+    mov c [clear]
     sys
     store a 0 tmp1 ; x
     store a 0 tmp2 ; y

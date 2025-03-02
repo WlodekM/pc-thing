@@ -1,0 +1,46 @@
+.label counter 0
+
+jmp start
+
+interrupt:
+    ld a counter
+    mov b 1
+    add
+    swp c a
+    mov b 100
+    mod
+    str c counter
+    cmp c 0
+    jnz print_num
+    ret
+
+#using printer.a
+
+print_num:
+    mov a -1 ; 65535
+    str a 16 ; put our number into 16
+    jmr print_num ; print number at 16 (well not print but stringify)
+    mov a 1 ; write
+    mov b 1 ; stdout
+    mov c 32 ; address
+    sys ; syscall
+    ret
+
+
+start:
+    mov a helloworld
+    mov b 1
+    sub
+    mov a 1
+    mov b 1
+    sys
+    mov a interrupt
+    str a 0x7FFF
+    nl:
+    jmp nl
+    ; halt
+
+helloworld:
+.str "Hello, World!"
+.hex a
+.hex 0
