@@ -13,6 +13,7 @@ function processCode(rcode: string, offset: number = 0) {
         .split('\n')
         .map(l => l.trim())
         .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
+        .map(l => l.replace(/0x([0-9A-Fa-f]+)/g, (_, hex: string) => ''+parseInt(hex, 16)))
         .filter(l => l)
         .reduce((acc, l) => {
             if (acc[acc.length - 1] && acc[acc.length - 1].endsWith('\\')) {
@@ -64,6 +65,7 @@ function processCode(rcode: string, offset: number = 0) {
         if (el.endsWith(":")) {
             console.log(sel[0], i)
             labels[sel[0].replace(/:$/g,'')] = '$'+i;
+            labels[`[${sel[0].replace(/:$/g,'')}]`] = `[${i}]`;
             continue;
         }
         if (sel[0] == '.label') {
@@ -78,6 +80,11 @@ function processCode(rcode: string, offset: number = 0) {
             continue;
         }
         if (sel[0] == '.macro') {
+            continue;
+        }
+        if (sel[0] == '#using') {
+            const newCode = processCode(new TextDecoder().decode(Deno.readFileSync(sel[1])), i + 1)
+            i += newCode.length + 1
             continue;
         }
         i++

@@ -34,6 +34,7 @@ for (const element of code) {
     }
     const parsedArgs = args.map(arg => {
         if (arg.startsWith('$')) return arg // line numbers can pass
+        if (arg.match(/^\[.*\]$/)) return arg // line numbers can pass
         if (!isNaN(+arg)) {
             // make sure its a uint16
             return Math.floor(+arg) & 0xFFFF
@@ -57,6 +58,13 @@ let i = 0
 for (const instr of instructions) {
     const newInstr: number[] = instr.map<number>(i => {
         if (typeof i !== 'string') return i;
+        const m = i.match(/^\[(.*)\]$/)
+        if (m) {
+            const ln = m[1]
+            if (!instructionAddresses[+ln]) throw 'a '+i
+            // console.log(i, instructionAddresses[+i.replace('$', '')])
+            return instructionAddresses[+ln]
+        }
         if (!i.startsWith('$')) return i.charCodeAt(0);
         if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
         // console.log(i, instructionAddresses[+i.replace('$', '')])
