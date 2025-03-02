@@ -6,6 +6,11 @@
 .macro storer(reg, val, addr) \
     put @reg @val\
     srr @reg @addr
+.macro inc(addr) \
+    ld a @addr\
+    put b 1\
+    add\
+    str c @addr
 
 jmp start
 get_coord:
@@ -37,7 +42,8 @@ start:
 
     .label px 16
     .label py 17
-    .label inp 256
+    .label inp 128
+    .label rowBuff 256
     store a 2 px
     store a 2 py
 
@@ -150,7 +156,7 @@ parse_input:
     
     case_s:
         ; width-1
-            mov a width
+            mov a height
             mov b 1
             sub
 
@@ -193,22 +199,18 @@ parse_input:
         ret
 
 print:
+    .label tmp6 5
     mov a 1
     mov b 1
     mov c [clear]
     sys
     store a 0 tmp1 ; x
     store a 0 tmp2 ; y
+    store a 0 tmp6 ; rowBuff index
     print_loop:
         ;get coord
             jmr get_coord
         ; get tile
-            ld a tmp3
-            ldr b a
-            str b 128
-            store a 0 129
-
-            ;TODO - make player tile be a @ or something
             ld a tmp1 ; x
             ld b px   ; player x
             crr c a b
@@ -219,16 +221,18 @@ print:
             ld a tmp4
             and
             cmp c 1
-            jz print_normal
-                store a 64 128
-            print_normal:
-                ; print
-                mov a 1
-                mov b 1
-                mov c 128
-                sys
-                ; ld c 128
-                ; dbg a
+            
+            ld a tmp6 ; buff pointer
+            mov b rowBuff ; + buff loc
+            add ;
+            ld a tmp3 ; tile pointer?
+            ldr b a ; load tile into b
+
+            jz set_normal
+                mov b 64
+            set_normal:
+            srr b c ; store b to c
+            ; store a 0 129
         ;loop
             mov a width
             mov b 1
@@ -241,8 +245,10 @@ print:
                 mov b 1            ; 1 -> b
                 add                ; X + 1
                 str c tmp1         ; X = X + 1
+                inc tmp6
                 jmp continue_ploop ; continue
             p_ifz:                 ; X is 0
+                store a 0 tmp6
                 store a 10 128
                 store a 0 129
                 mov a 1
@@ -254,6 +260,14 @@ print:
                 mov b 1            ; 1 -> b
                 add                ; c = Y + 1
                 str c tmp2         ; Y = c
+                ; print
+                    ; print
+                    mov a 1
+                    mov b 1
+                    mov c rowBuff
+                    sys
+                    ; ld c 128
+                    ; dbg a
                 jmp continue_ploop ; continue
             continue_ploop:
                 mov a height

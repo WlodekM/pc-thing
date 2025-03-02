@@ -94,10 +94,14 @@ function processCode(rcode: string, offset: number = 0) {
     li = 0;
     while (li < code.length) {
         let el = code[li];
-        const sel = el.split(' ');
+        let sel = el.split(' ');
         if (aliases[sel[0]]) el = el.replace(sel[0], aliases[sel[0]]);
         li++;
         if (macros[sel[0]]) {
+            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
+                el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
+            }
+            sel = el.split(' ')
             const macro = macros[sel[0]]
             sel.shift()
             let rr = macro(sel)

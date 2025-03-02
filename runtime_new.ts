@@ -76,7 +76,7 @@ while (
         // console.debug(instruction, runtime.instructions, definition)
         const args = [];
         if (Deno.args.includes('-d'))
-        console.debug(runtime.pc.programPointer, instruction, instruction, runtime.pc.mem[runtime.pc.programPointer+1])
+        console.debug(runtime.pc.programPointer, definition, instruction, runtime.pc.mem[runtime.pc.programPointer+1])
         while (args.length < runtime.instructions[instruction].args) {
             args.push(runtime.pc.mem[runtime.pc.programPointer])
             runtime.pc.programPointer++
