@@ -1,0 +1,43 @@
+start:
+    copyLoop:
+        ld a [codePointer]
+        mov b 0x6000
+        add
+        str c [targetPointer]
+
+        mov a codeStart
+        ld b [codePointer]
+        add
+        
+        ld a [targetPointer]
+        swpm a c
+        ; dbg b
+        
+        ld a [codePointer]
+        mov b 1
+        add
+        str c [codePointer]
+        ; continue loop
+            ; (byte we just copied) -> B
+            ldm b [targetPointer]
+            ; (next byte) -> A
+            ldr a c
+            ; C = A (aka next byte) == 0
+            crp c a 0
+            ; A = B (aka last byte) == 1E (end instruction)
+            crp a b 0x1e
+            swp c b ; C -> B
+            and ; c=a&&b
+            ; dbg a
+            cmp c 1 ; c==1?
+            jz copyLoop ; continue if c != 1
+    dbg c
+    jmp 0x6001
+
+
+targetPointer:
+.hex 0
+codePointer:
+.hex 0
+; start of bootloader
+codeStart:

@@ -1,0 +1,67 @@
+.offset 0x6000 ; bootloader is in 0x6000, copied there by another script
+start:
+    mov a 0
+    str a [gottenNZ]
+    ; currSector -> A
+    ld a [currSector]
+    str a 0x7cff
+
+    mov b 512
+    mul
+    str c [sectorOffset]
+
+    mov a 0
+    str a [bytePointer]
+
+    mov a 0
+    str a [ptrThing]
+
+    copySector:
+        ld a [sectorOffset]
+        ld b [bytePointer]
+        add
+        ;
+        swp a c
+        mov b 0x8000 ; default code position
+        add
+        str c [targetPointer]
+
+        ld a [sectorOffset]
+        mov b 0x7d00
+        add
+        swp c a
+        ld b [ptrThing]
+        add
+        ld b [targetPointer]
+        swpm c b
+
+        ;continue loop
+        ; pointer to 8xxx
+        ld a [ptrThing]
+        mov b 1
+        add
+        str c [ptrThing]
+
+        ; pointer offset for sector thing
+        ld a [bytePointer]
+        mov b 1
+        add
+        str c [bytePointer]
+
+        ; offset == 513
+        cmp c 513
+        jz copySector
+    halt
+
+ptrThing:
+.hex 0
+currSector:
+.hex 0
+sectorOffset:
+.hex 0
+bytePointer:
+.hex 0
+gottenNZ:
+.hex 0
+targetPointer:
+.hex 0
