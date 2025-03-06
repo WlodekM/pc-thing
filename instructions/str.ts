@@ -3,9 +3,7 @@ import { PC } from "../pc.ts";
 export default {
     function(this: PC, [reg, addr]: number[]) {
         const r = this.lib.parseReg(reg)
-        if (Number(addr) > this.mem.length || Number(addr) < 0 || Number.isNaN(Number(addr)))
-            throw 'unknown address';
-        this.mem[Number(addr)] = this.registers[r] & 0xFFFF
+        this.setMem(Number(addr), this.registers[r] & 0xFFFF)
     },
     args: 2
 }

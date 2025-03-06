@@ -3,6 +3,15 @@ type Registers = [number, number, number]
 export class PC {
     registers: Registers = new Array<number>(3).fill(0) as Registers
     mem = new Array<number>(2**16).fill(0)
+    getMem(addr: number): number {
+        if (addr < 0 || addr > 2**16)
+            throw 'invalid address';
+        //TODO - memory mapping
+        return this.mem[addr];
+    }
+    setMem(addr: number, data: number) {
+        this.mem[addr] = Math.floor(data) % 2**16
+    }
     programPointer: number = 0;
     lib = lib
     returnFlag = 0;
