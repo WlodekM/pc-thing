@@ -77,14 +77,14 @@ if (!endInst) throw 'where the fuck is the end instruction'
 const endInstId = endInst[0];
 
 
-// let c = 0
+let c = 0
 while (
     runtime.pc.mem[runtime.pc.programPointer] != endInstId &&
     runtime.pc.programPointer != 0xFFFF - 1) {
     try {
         const definition = Object.entries(runtime.pc.instructions).find(([a]) => +a == runtime.pc.mem[runtime.pc.programPointer])
         if (!definition || !definition[1]) throw `what the fuck is that (unknown instruction)
-at ${runtime.pc.programPointer}
+at ${runtime.pc.programPointer} (${runtime.pc.programPointer.toString(16)}/${(runtime.pc.programPointer * 2).toString(16)}/${(runtime.pc.programPointer * 2 - (2**16)).toString(16)})
 instruction: ${runtime.pc.mem[runtime.pc.programPointer]}`
         const instruction = definition[1]
         runtime.pc.programPointer ++
@@ -98,7 +98,7 @@ instruction: ${runtime.pc.mem[runtime.pc.programPointer]}`
         }
         runtime.run([+definition[0], ...args])
         // runtime.pc.programPointer++
-        // c++
+        c++
     } catch (error) {
         console.error(error);
         break;
