@@ -109,6 +109,9 @@ function processCode(rcode: string, offset: number = 0) {
         if (sel[0] == '.macro') {
             continue;
         }
+        if (sel[0] == '.offset') {
+            continue;
+        }
         if (sel[0] == '#using') {
             const newCode = processCode(new TextDecoder().decode(Deno.readFileSync(sel[1])), i + 1)
             i += newCode.length + 1
@@ -152,6 +155,10 @@ function processCode(rcode: string, offset: number = 0) {
             continue;
         }
         if (sel[0] == '.macro') {
+            continue;
+        }
+        if (sel[0] == '.offset') {
+            object.offset = +sel[1]
             continue;
         }
         if (sel[0] == '#using') {
