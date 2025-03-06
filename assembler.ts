@@ -8,8 +8,27 @@ const aliases = Object.fromEntries(new TextDecoder()
 
 const macros: Record<string, (args: string[]) => string> = {}
 
+interface DataAddr {
+    line: number,
+    offset: number
+}
+
+interface ObjectFile {
+    // number is the ammount of bytes to skip
+    code: (string | number)[],
+    offset: number,
+    // line number, data
+    data: [number, number[]][]
+}
+
+const object: ObjectFile = {
+    code: [],
+    data: [],
+    offset: 2**16 / 2
+}
+
 function processCode(rcode: string, offset: number = 0) {
-    let code: string[] = rcode
+    let code: (string | number)[] = rcode
         .split('\n')
         .map(l => l.trim())
         .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
@@ -31,6 +50,10 @@ function processCode(rcode: string, offset: number = 0) {
     //parse macros
     while (li < code.length) {
         const el = code[li];
+        if (typeof el == 'number') {
+            li++;
+            continue;
+        }
         const sel = el.split(' ');
         li++;
         if (sel[0] == '.macro') {
@@ -60,6 +83,10 @@ function processCode(rcode: string, offset: number = 0) {
     li = 0;
     while (li < code.length) {
         const el = code[li];
+        if (typeof el == 'number') {
+            li++;
+            continue;
+        }
         const sel = el.split(' ');
         li++;
         if (el.endsWith(":")) {
@@ -94,6 +121,11 @@ function processCode(rcode: string, offset: number = 0) {
     li = 0;
     while (li < code.length) {
         let el = code[li];
+        if (typeof el == 'number') {
+            result.push(el);
+            li++;
+            continue;
+        }
         let sel = el.split(' ');
         if (aliases[sel[0]]) el = el.replace(sel[0], aliases[sel[0]]);
         li++;
@@ -133,6 +165,25 @@ function processCode(rcode: string, offset: number = 0) {
             i += newCode.length + 1
             continue;
         }
+        if (sel[0] == '.hex') {
+            object.data.push([
+                i,
+                [parseInt(sel[1], 16)]
+            ])
+            result.push(1)
+            i++;
+            continue;
+        }
+        if (sel[0] == '.str') {
+            const str = [...el.matchAll(/"(.*?)(?<!\\)"/g)][0][1].replaceAll('\\"', '"')
+            object.data.push([
+                i,
+                new Array(str.length).fill(0).map((_, i) => str.charCodeAt(i))
+            ])
+            result.push(str.length)
+            i++;
+            continue;
+        }
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
             el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
         }
@@ -142,7 +193,7 @@ function processCode(rcode: string, offset: number = 0) {
     return result
 }
 
-const result = processCode(code+'\nend')
+object.code = processCode(code+'\nend')
 
 // console.log(labels)
 
@@ -153,4 +204,4 @@ const result = processCode(code+'\nend')
 //     result.push(`dbg ${label}`)
 // }
 
-Deno.writeTextFileSync('code.p', result.join('\n'))
+Deno.writeTextFileSync('code.o', JSON.stringify(object))
