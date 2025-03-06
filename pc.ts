@@ -11,14 +11,14 @@ export class PC {
         return this.mem[addr];
     }
     setMem(addr: number, data: number) {
-        if (this.getSegment && addr == 0x7cfe) {
+        if (this.getSegment && addr == 0x7cff) {
             const segment = this.getSegment(data)
             for (let i = 0; i < 512; i++) {
-                this.mem[0x7cff + i] = segment.length > i ? segment[i] : 0;
+                this.mem[0x7d00 + i] = segment.length > i ? segment[i] : 0;
             }
             return;
         }
-        if (addr >= 0x7cff && addr <= 0x7fff && this.getSegment) {
+        if (addr >= 0x7d00 && addr <= 0x7fff && this.getSegment) {
             return;
         }
         this.mem[addr] = Math.floor(data) % 2**16
@@ -59,11 +59,12 @@ export class PC {
         27: "jnzr",
         28: "mul",
         29: "jmr",
-        30: "end"
+        30: "end",
+        31: "crp",
     }
     constructor(diskSupport = false) {
         if (diskSupport) {
-            this.mem[0x7cfe] = (2**16) - 1
+            this.mem[0x7cff] = (2**16) - 1
         }
     }
 }
