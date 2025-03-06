@@ -326,10 +326,10 @@ swap memory
 
 usage:
 ```
-swp (addr1) (addr1)
+swp (reg1) (reg2)
 ```
 
-swaps addresses addr1 and addr2
+swaps addresses at reg1 and at reg2
 
 ## SYS
 
