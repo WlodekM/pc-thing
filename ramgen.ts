@@ -12,17 +12,31 @@ for (const filename of dir) {
 
 commands.push('end')
 
+interface ObjectFile {
+    // number is the ammount of bytes to skip
+    code: (string | number)[],
+    offset: number,
+    // line number, data
+    data: [number, number[]][]
+}
+
 // console.log(commands, commands.length, (commands.length - 1).toString(16))
 
-const code = new TextDecoder().decode(Deno.readFileSync('code.p')).split('\n')
+const object: ObjectFile = JSON.parse(new TextDecoder().decode(Deno.readFileSync('code.o')))
 
-const offset = 2**16 / 2
+const code = object.code
+
+const offset = object.offset ?? 2**16 / 2
 
 const ram = []
 
 const instructions = []
 
 for (const element of code) {
+    if (typeof element == 'number') {
+        instructions.push(element)
+        continue;
+    }
     const [command, ...args] = element.split(' ');
     switch (command) {
         case '.hex':
@@ -55,11 +69,17 @@ const instructionAddresses: number[] = [];
 let addr = offset;
 for (const instr of instructions) {
     instructionAddresses.push(addr);
-    addr += instr.length
+    addr += typeof instr == 'number' ? instr : instr.length
 }
 
 let i = 0
 for (const instr of instructions) {
+    console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)
+    if (typeof instr == 'number') {
+        console.log(ram.length, instr, new Array<number>(instr).fill(0))
+        ram.push(...new Array<number>(instr).fill(0))
+        continue;
+    }
     const newInstr: number[] = instr.map<number>(i => {
         if (typeof i !== 'string') return i;
         const m = i.match(/^\[(.*)\]$/)
@@ -77,6 +97,12 @@ for (const instr of instructions) {
     // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
     ram.push(...newInstr)
     i++
+}
+
+
+for (const element of object.data) {
+    console.log(instructionAddresses[element[0]] - offset, element[0], element[1])
+    ram.splice(instructionAddresses[element[0]] - offset, element[1].length, ...element[1])
 }
 
 Deno.writeFileSync('iram.bin', Uint8Array.from(ram.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
