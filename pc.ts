@@ -3,6 +3,7 @@ type Registers = [number, number, number]
 export class PC {
     registers: Registers = new Array<number>(3).fill(0) as Registers
     mem = new Array<number>(2**16).fill(0)
+    getSegment: undefined | ((segment: number) => Uint8Array) = undefined;
     getMem(addr: number): number {
         if (addr < 0 || addr > 2**16)
             throw 'invalid address';
@@ -10,6 +11,16 @@ export class PC {
         return this.mem[addr];
     }
     setMem(addr: number, data: number) {
+        if (this.getSegment && addr == 0x7cfe) {
+            const segment = this.getSegment(data)
+            for (let i = 0; i < 512; i++) {
+                this.mem[0x7cff + i] = segment.length > i ? segment[i] : 0;
+            }
+            return;
+        }
+        if (addr >= 0x7cff && addr <= 0x7fff && this.getSegment) {
+            return;
+        }
         this.mem[addr] = Math.floor(data) % 2**16
     }
     programPointer: number = 0;
@@ -49,5 +60,10 @@ export class PC {
         28: "mul",
         29: "jmr",
         30: "end"
+    }
+    constructor(diskSupport = false) {
+        if (diskSupport) {
+            this.mem[0x7cfe] = (2**16) - 1
+        }
     }
 }

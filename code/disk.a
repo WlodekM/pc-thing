@@ -1,0 +1,7 @@
+start:
+    ; get sector 0
+    mov a 0
+    str a 0x7cfe
+
+    ; jump to the sector
+    jmp 0x7d00

@@ -3,7 +3,7 @@ import { PC } from "./pc.ts";
 type instruction = {function: (this: PC, argv: number[]) => void, args: number}
 
 class Runtime {
-    pc: PC = new PC()
+    pc: PC = new PC(true)
     instructions: Record<string, instruction> = {}
     instructionNames: string[] = []
 
@@ -27,7 +27,20 @@ class Runtime {
     }
 }
 
+const disk = [...Deno.readFileSync('disk.img')].reduce<number[]>((result, value, index, array) => {
+    if (index % 2 === 0) {
+        result.push(value + (array[index + 1] << 8))
+    }
+    return result;
+}, [])
+
 const runtime = new Runtime()
+
+runtime.pc.getSegment = function getSegment(segment: number): Uint8Array {
+    const seg = disk.slice(segment * 512, (segment + 1) * 512);
+    console.log(`getSegment( ${segment} ):`, seg)
+    return Uint8Array.from(seg.fill(seg.length, 512))
+}
 
 const dir = Deno.readDirSync('instructions');
 
@@ -49,12 +62,12 @@ runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<
 
 runtime.pc.programPointer = 65536 / 2
 
-function gotoInterrupt() {
-    if (!runtime.pc.mem[65536 / 2 - 1])
-        return;
-    runtime.pc.returnStack.push(runtime.pc.programPointer);
-    runtime.pc.programPointer = runtime.pc.mem[65536 / 2 - 1]
-}
+// function gotoInterrupt() {
+//     if (!runtime.pc.mem[65536 / 2 - 1])
+//         return;
+//     runtime.pc.returnStack.push(runtime.pc.programPointer);
+//     runtime.pc.programPointer = runtime.pc.mem[65536 / 2 - 1]
+// }
 
 // const interruptInterval = setInterval(gotoInterrupt, 10)
 
@@ -70,7 +83,9 @@ while (
     runtime.pc.programPointer != 0xFFFF - 1) {
     try {
         const definition = Object.entries(runtime.pc.instructions).find(([a]) => +a == runtime.pc.mem[runtime.pc.programPointer])
-        if (!definition || !definition[1]) throw 'what the fuck is that'
+        if (!definition || !definition[1]) throw `what the fuck is that (unknown instruction)
+at ${runtime.pc.programPointer}
+instruction: ${runtime.pc.mem[runtime.pc.programPointer]}`
         const instruction = definition[1]
         runtime.pc.programPointer ++
         // console.debug(instruction, runtime.instructions, definition)

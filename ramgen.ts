@@ -16,7 +16,7 @@ commands.push('end')
 
 const code = new TextDecoder().decode(Deno.readFileSync('code.p')).split('\n')
 
-const offset = 65534 / 2 + 1
+const offset = 2**16 / 2
 
 const ram = []
 
