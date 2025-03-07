@@ -3,7 +3,7 @@ type Registers = [number, number, number]
 export class PC {
     registers: Registers = new Array<number>(3).fill(0) as Registers
     mem = new Array<number>(2**16).fill(0)
-    getSegment: undefined | ((segment: number) => Uint8Array) = undefined;
+    getSegment: undefined | ((segment: number) => Uint16Array) = undefined;
     getMem(addr: number): number {
         if (addr < 0 || addr > 2**16)
             throw 'invalid address';

@@ -29,17 +29,17 @@ class Runtime {
 
 const disk = [...Deno.readFileSync('disk.img')].reduce<number[]>((result, value, index, array) => {
     if (index % 2 === 0) {
-        result.push(value + (array[index + 1] << 8))
+        result.push(value | (array[index + 1] << 8))
     }
     return result;
 }, [])
 
 const runtime = new Runtime()
 
-runtime.pc.getSegment = function getSegment(segment: number): Uint8Array {
+runtime.pc.getSegment = function getSegment(segment: number): Uint16Array {
     const seg = disk.slice(segment * 512, (segment + 1) * 512);
     console.log(`getSegment( ${segment} ):`, seg)
-    return Uint8Array.from(seg.fill(seg.length, 512))
+    return Uint16Array.from(seg.fill(seg.length, 512))
 }
 
 const dir = Deno.readDirSync('instructions');
@@ -55,7 +55,7 @@ const iram = Deno.readFileSync("iram.bin")
 
 runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<number[]>((result, value, index, array) => {
     if (index % 2 === 0) {
-        result.push(value + (array[index + 1] << 8))
+        result.push(value | (array[index + 1] << 8))
     }
     return result;
 }, []))
