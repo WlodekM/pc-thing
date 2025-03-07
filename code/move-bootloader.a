@@ -11,7 +11,6 @@ start:
         
         ld a [targetPointer]
         swpm a c
-        ; dbg b
         
         ld a [codePointer]
         mov b 1
@@ -28,10 +27,8 @@ start:
             crp a b 0x1e
             swp c b ; C -> B
             and ; c=a&&b
-            ; dbg a
             cmp c 1 ; c==1?
             jz copyLoop ; continue if c != 1
-    dbg c
     jmp 0x6001
 
 

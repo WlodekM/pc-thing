@@ -26,14 +26,24 @@ start:
         add
         str c [targetPointer]
 
-        ld a [sectorOffset]
-        mov b 0x7d00
-        add
-        swp c a
+        ; ld a [sectorOffset]
+        mov a 0x7d00
+        ; add
+        ; swp c a
         ld b [ptrThing]
         add
         ld b [targetPointer]
         swpm c b
+
+        ldr a c
+        mov b 0
+        crr a a b
+        mov b 1
+        xor
+        swp a c
+        ld b [gottenNZ]
+        or
+        str c [gottenNZ]
 
         ;continue loop
         ; pointer to 8xxx
@@ -51,7 +61,16 @@ start:
         ; offset == 513
         cmp c 513
         jz copySector
-    halt
+    ; continue main loop
+    ld a [currSector]
+    mov b 1
+    add
+    str c [currSector]
+    ld a [gottenNZ]
+    cmp a 0
+    jz start
+    ;escaped
+    jmp 0x8001
 
 ptrThing:
 .hex 0
