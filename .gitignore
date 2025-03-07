@@ -5,4 +5,4 @@ iram.bin
 .vscode/6502-project.json
 code.o
 *.bin
-disk.img
+*.img
