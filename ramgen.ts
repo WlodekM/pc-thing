@@ -105,4 +105,4 @@ for (const element of object.data) {
     ram.splice(instructionAddresses[element[0]] - offset, element[1].length, ...element[1])
 }
 
-Deno.writeFileSync('iram.bin', Uint8Array.from(ram.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
+Deno.writeFileSync(Deno.args[0] ?? 'iram.bin', Uint8Array.from(ram.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
