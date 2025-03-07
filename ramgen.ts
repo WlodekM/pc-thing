@@ -3,11 +3,13 @@ const pc = new PC()
 // TODO - finish this maybe
 
 const commands = []
+const commandData: Record<string, any> = {}
 
 const dir = Deno.readDirSync('instructions');
 
 for (const filename of dir) {
     commands.push(filename.name.replace(/\..*?$/g, ''))
+    commandData[filename.name.replace(/\..*?$/g, '')] = (await import('./instructions/' + filename.name)).default
 }
 
 commands.push('end')
@@ -56,11 +58,13 @@ for (const element of code) {
             return Math.floor(+arg) & 0xFFFF
         }
         arg = arg.toLowerCase();
-        if (!'abc'.split('').includes(arg)) throw 'whar '+arg
+        if (!pc.regNames.split('').includes(arg)) throw 'whar '+arg
         return arg
     })
     const inst = Object.entries(pc.instructions).find(([_, b]) => b == command);
     if (!inst) throw 'erm,, what the sigma ' + command + ' (' + inst + ')'
+    if (commandData[command].args != args.length)
+        throw `mismatch of ${command} arg length ${commandData[command].args} != ${args.length}`
     instructions.push([+inst[0], ...parsedArgs])
 }
 

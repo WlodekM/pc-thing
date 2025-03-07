@@ -2,6 +2,7 @@ import * as lib from "./lib.ts";
 type Registers = [number, number, number]
 export class PC {
     registers: Registers = new Array<number>(3).fill(0) as Registers
+    regNames: string = 'abc'
     mem = new Array<number>(2**16).fill(0)
     getSegment: undefined | ((segment: number) => Uint16Array) = undefined;
     getMem(addr: number): number {
@@ -49,7 +50,7 @@ export class PC {
         17: "srr",
         18: "jmp",
         19: "and",
-        20: "ldm",
+        20: "ldm", // extra/deprecated
         21: "swpm",
         22: "dbg",
         23: "not",
@@ -60,7 +61,14 @@ export class PC {
         28: "mul",
         29: "jmr",
         30: "end",
-        31: "crp",
+        31: "crp", // extra/deprecated
+        32: "inc", // extra/deprecated
+        33: "incr", // extra/deprecated
+        34: 'shl',
+        35: 'shr',
+        36: 'sbc',
+        37: 'dec', // extra/deprecated
+        38: 'decr' // extra/deprecated
     }
     constructor(diskSupport = false) {
         if (diskSupport) {

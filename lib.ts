@@ -1,5 +1,5 @@
 export function parseReg(arg: number): number {
-    if (!'ABC'.split('').includes(String.fromCharCode(arg).toUpperCase()))
+    if (!'abc'.split('').includes(String.fromCharCode(arg).toLowerCase()))
         throw `invalid register "${String.fromCharCode(arg)}"`;
-    return 'ABC'.split('').indexOf(String.fromCharCode(arg).toUpperCase())
+    return 'abc'.split('').indexOf(String.fromCharCode(arg).toLowerCase())
 }

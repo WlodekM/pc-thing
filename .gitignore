@@ -6,3 +6,4 @@ iram.bin
 code.o
 *.bin
 *.img
+thefile

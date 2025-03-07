@@ -1,0 +1,64 @@
+; MEMMAN - memory manager
+
+jmp start
+
+; code from calc.a
+; call with length in A
+str_to_num:
+    ; pointer to current character
+    ; ld a len
+    mov b 63
+    add
+    str c [ptr]
+    mov a 1
+    str a [mult]
+    mov a 0
+    str a [num]
+    .label zero 48
+    stm_loop:
+        ;load char, subtract zero, multiply by 10
+        ld b [ptr]
+        ldr a b
+        mov b zero
+        sub
+        swp c a
+        ld b [mult]
+        mul
+
+        ; add to num
+        swp c b
+        ld a [num]
+        add
+        str c [num]
+
+        ld a [mult]
+        mov b 10
+        mul
+        str c [mult]
+
+        ; move pointer
+        ld a [ptr]
+        mov b 1
+        sub
+        str c [ptr]
+        cmp c 63
+        jz stm_loop
+    ret
+
+start:
+
+
+
+startup_message:
+.str "welcome to mem man the memory manager of the memory of managing the memory"
+.hex 0xa
+.str "yeah"
+.hex 0xa
+.hex 0xa
+.hex 0
+ptr:
+.hex 0
+mult:
+.hex 0
+num:
+.hex 0
