@@ -15,3 +15,5 @@ the system has:
 - its own assembly language
 
 - disk support
+
+see [instructions.md](instructions.md) to see the documentation for the instructions or [assembler.md](assembler.md) to see the documentation for the assembler

@@ -64,6 +64,42 @@ start:
 ```
 this will use printing code from `printer.a` to print the number 65535
 
+## data
+
+to insert data in your code (for example: a string) you can use the `.str` or `.hex` instruction(?) thingies
+
+dunno how to call them, anyways, example
+
+```
+mov a 1 ; write
+mov b 1 ; stdout
+mov c [string]
+sys
+end
+
+string:
+.str "is your refrigerator running?"
+```
+
+oh and btw, if you're using a label to keep track of their location (actually, what else would you use), reference them by doing `[NAME]` instead of `NAME` because due to some jank with how the emulator/assembler/whatever works i needed to offset the location for `NAME` references for jump instructions to work
+
+here's an example of using them as variable storage
+
+```
+init:
+    mov a 1
+    str a [counter]
+
+increment:
+    ld a [counter]
+    mov b 1
+    add
+    str c [counter]
+
+counter:
+.hex 0
+```
+
 ##
 
 also i think raw code doesnt support indentation
