@@ -1,0 +1,10 @@
+#using code/strlib.a
+start:
+    mov a 16
+    mov b -1
+    jmr num_to_str
+    mov a 1
+    mov b 1
+    mov c 16
+    sys
+    end

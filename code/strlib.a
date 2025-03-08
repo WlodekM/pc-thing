@@ -1,0 +1,128 @@
+; number to string
+; a - pointer to output
+; b - number to print
+num_to_str:
+    str a out_pointer
+    str a out_start
+    str b [number]
+    ; non-address definitions
+    .label zero 48
+    ; define stuff in memory
+    ; .label number 16
+    ; .label mult 17
+    ; mov a 1
+    ; str a mult
+    ; .label currnum 18
+    ; .label tmp1 19
+    ; .label swap_counter 21
+
+    loop_start:
+        ; get num-(num%mult)
+            ld a [number]
+            ld b [mult]
+            mod
+            swp c b
+            sub
+            str c [tmp1]
+
+        ; get num-(num%(mult*10))
+            mov a 10
+            ld b [mult]
+            mul
+            swp c b
+            ld a [number]
+            mod
+            swp c b
+            sub
+        
+        ; subtract the thingies to get the current digit
+        swp c b
+        ld a [tmp1]
+        sub
+        swp c a
+        ld b [mult]
+        div
+        str c [currnum]
+
+        ; add zero to currnum and store at out_pointer
+        swp a c ; currnum -> A
+        mov b zero
+        add
+        ld a [out_pointer]
+        srr c a ; store c to address at a (which is out_pointer)
+
+        ; continue loop
+            ; increment out_pointer
+            ld a [out_pointer]
+            mov b 1
+            add
+            str c [out_pointer]
+            ; increment mult
+            ld a [mult]
+            mov b 10
+            mul
+            str c [mult]
+        
+            swp c b ; mult -> b
+            ld a [number] ; get number
+            mod ; get mod, will be equal to number if reached end
+            cmr c a ; compare result of mod and number (which is still in a)
+            jz loop_start ; jump if not equal
+    ; escaped from loop; swapping around memory to flip the text
+    ld a [out_pointer]
+    ld b [out_start]
+    sub
+    swp c a
+    mov b 2
+    div
+    str c [swap_counter]
+    cmp c 0
+    jnz end_swap
+    start_swap:
+        ; ptr - counter
+            ld b [swap_counter]
+            ld a [out_pointer]
+            sub
+            str c [tmp1]
+        ; start + counter
+            ld a [swap_counter] ; 1
+            mov b 1
+            sub ; 1
+            swp c b ; 1 -> b
+            ld a [out_start] ; 32
+            add ; 32 + 1 = 33
+        swp c b
+        ld a [tmp1]
+        dbg 304
+        swpm a b
+        ld a [swap_counter]
+        mov b 1
+        sub
+        str c [swap_counter]
+        cmp c 0
+        jz start_swap
+    end_swap:
+    ; add \n\0
+    ld b [out_pointer]
+    mov a 10 ; \n
+    srr a b
+    mov a 1
+    add
+    mov a 0 ; \0
+    srr a c
+    ret
+
+out_pointer:
+.hex 0
+out_start:
+.hex 0
+number:
+.hex 0
+mult:
+.hex 1
+currnum:
+.hex 0
+tmp1:
+.hex 0
+swap_counter:
+.hex 0

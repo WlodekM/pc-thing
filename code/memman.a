@@ -2,12 +2,14 @@
 
 jmp start
 
+#using code/printer.a
+
 ; code from calc.a
 ; call with length in A
 str_to_num:
     ; pointer to current character
     ; ld a len
-    mov b 63
+    ld b [stm_start]
     add
     str c [ptr]
     mov a 1
@@ -41,13 +43,78 @@ str_to_num:
         mov b 1
         sub
         str c [ptr]
-        cmp c 63
+        ld b [stm_start]
+        cmr c b
         jz stm_loop
     ret
 
+get_input:
+    mov a 0
+    mov b 0
+    mov c [input]
+    sys
+    str a [len]
+    ret
+
+parse_input:
+    mov a 0
+    str a [inp_ptr]
+
+    .macro case(addr, val, ln) \
+        ld a @addr\
+        cmp a @val\
+        jnz @ln
+    .macro break() jmp default
+
+    case [input] 'g' case_g
+    break
+
+    case_g:
+        ; get pointer to number
+            mov a [input]
+            mov b 1
+            add
+            str c [stm_start]
+        ; get new length
+            ld a [len]
+            mov b 2 ; subtract 2 for command + \n at the end
+            sub
+            swp c a 
+        jmr str_to_num
+        ld a [num]
+        dbg 3
+        str a 16
+        jmr print_num
+        ; print the output
+            mov a 1 ; write
+            mov b 1 ; stdout
+            mov c 32 ; address
+            sys ; syscall
+        mov a 1
+        mov b 1
+        mov c [colon_space]
+        sys
+        ldm a [num]
+        str a 16
+        jmr print_num
+        ; print the output
+            mov a 1 ; write
+            mov b 1 ; stdout
+            mov c 32 ; address
+            sys ; syscall
+        break
+
+    default:
+        ret
+
+
 start:
-
-
+    mov a 2
+    mov b 0
+    sys
+    jmr get_input
+    jmr parse_input
+    halt
 
 startup_message:
 .str "welcome to mem man the memory manager of the memory of managing the memory"
@@ -56,9 +123,32 @@ startup_message:
 .hex 0xa
 .hex 0xa
 .hex 0
+err:
+.str "what the fuck is this"
+.hex 0xa
+.hex 0
 ptr:
 .hex 0
 mult:
 .hex 0
 num:
+.hex 0
+; 256 bytes of input
+input:
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+.str "0000000000000000000000000000000000000000000000000000000000000000"
+len:
+.hex 0
+inp_ptr:
+.hex 0
+stm_start:
+.hex 0
+colon_space:
+.str ": "
 .hex 0
