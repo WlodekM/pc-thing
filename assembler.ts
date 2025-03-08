@@ -27,11 +27,12 @@ const object: ObjectFile = {
     offset: 2**16 / 2
 }
 
-function processCode(rcode: string, offset: number = 0) {
-    let code: (string | number)[] = rcode
+function processCode(rcode: string, offset: number = 0): (string | number)[] {
+    const code: (string | number)[] = rcode
         .split('\n')
         .map(l => l.trim())
         .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
+        .map(l => l.replace(/(?<!(?<!\"[^"]*)\"[^"]*)'(.)'/g, (_, char) => char.charCodeAt(0)))
         .map(l => l.replace(/0x([0-9A-Fa-f]+)/g, (_, hex: string) => ''+parseInt(hex, 16)))
         .filter(l => l)
         .reduce((acc, l) => {
@@ -43,7 +44,7 @@ function processCode(rcode: string, offset: number = 0) {
             acc.push(l)
             return acc
         }, [] as string[]);
-    const result = []
+    const result: (string | number)[] = []
 
     let i = offset;
     let li = 0;
@@ -163,12 +164,8 @@ function processCode(rcode: string, offset: number = 0) {
         }
         if (sel[0] == '#using') {
             const newCode = processCode(new TextDecoder().decode(Deno.readFileSync(sel[1])), i + 1)
-            code = [
-                ...code.filter((_, i) => i < li),
-                `jmp $${i+newCode.length+1}`, // skip over included code
-                ...newCode,
-                ...code.filter((_, i) => i >= li)
-            ]
+            result.push(`jmp $${i+newCode.length+1}`) // skip over included code
+            result.push(...newCode)
             i += newCode.length + 1
             continue;
         }
