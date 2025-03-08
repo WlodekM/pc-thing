@@ -32,7 +32,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         .split('\n')
         .map(l => l.trim())
         .map(l => l.replace(/\s*(?<!(?<!\"[^"]*)\"[^"]*);.*$/gm, ''))
-        .map(l => l.replace(/(?<!(?<!\"[^"]*)\"[^"]*)'(.)'/g, (_, char) => char.charCodeAt(0)))
+        .map(l => l.replace(/(?<!(?<!\"[^"]*)\"[^"]*)'(.)'/g, (_, char) => char.charCodeAt(0).toString()))
         .map(l => l.replace(/0x([0-9A-Fa-f]+)/g, (_, hex: string) => ''+parseInt(hex, 16)))
         .filter(l => l)
         .reduce((acc, l) => {
