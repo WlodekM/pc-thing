@@ -1,13 +1,17 @@
 # instructions
 
+the base instruction set (some instructions may be undocumented)
+
 table of contents:
  - [ADD](#add)
  - [AND](#and)
+ - [CLR](#clr)
  - [CMP](#cmp)
  - [CMR](#cmr)
  - [CRR](#crr)
  - [DBG](#dbg)
  - [DIV](#div)
+ - [HALT](#halt)
  - [JMP](#jmp)
  - [JMR](#jmr)
  - [JNZ](#jnz)
@@ -23,6 +27,8 @@ table of contents:
  - [OR](#or)
  - [PUT](#put)
  - [RET](#ret)
+ - [SHL](#SHL)
+ - [SHR](#SHR)
  - [SRM](#srm)
  - [SRR](#srr)
  - [STR](#str)
@@ -56,6 +62,18 @@ and
 ```
 
 bitwise and's registers `a` and `b` and puts the output in `c`
+
+
+## CLR
+
+clear return buffer
+
+usage:
+```
+clr
+```
+
+pops the most recent value from the return stack
 
 ## CMP
 
@@ -111,6 +129,17 @@ div
 ```
 
 divides register `a` by register `b` and stores output in `c`, the output is floored
+
+## HALT
+
+halt
+
+usage:
+```
+halt
+```
+
+halts the CPU
 
 ## JMP
 
@@ -269,6 +298,28 @@ ret
 ```
 
 returns to last value in return stack
+
+## SHL
+
+shift left
+
+usage:
+```
+shl (reg) (by)
+```
+
+shifts the value of `reg` to the left by `by`
+
+## SHR
+
+shift right
+
+usage:
+```
+shr (reg) (by)
+```
+
+shifts the value of `reg` to the right by `by`
 
 ## SRM
 
