@@ -1,6 +1,6 @@
 import { PC } from "./pc.ts";
 
-type instruction = {function: (this: PC, argv: number[]) => void, args: number}
+type instruction = { function: (this: PC, argv: number[]) => void, args: number }
 
 class Runtime {
     pc: PC = new PC(true)
@@ -49,7 +49,7 @@ for (const filename of dir) {
         (await import('./instructions/' + filename.name)).default)
 }
 
-runtime.addInstruction('end', {function: () => { }, args: 0})
+runtime.addInstruction('end', { function: () => { }, args: 0 })
 
 const iram = Deno.readFileSync("iram.bin")
 
@@ -62,14 +62,29 @@ runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<
 
 runtime.pc.programPointer = 65536 / 2
 
-// function gotoInterrupt() {
-//     if (!runtime.pc.mem[65536 / 2 - 1])
-//         return;
-//     runtime.pc.returnStack.push(runtime.pc.programPointer);
-//     runtime.pc.programPointer = runtime.pc.mem[65536 / 2 - 1]
-// }
+const haltEvents = new EventTarget()
 
-// const interruptInterval = setInterval(gotoInterrupt, 10)
+function waitUntilNotInterrupted(): Promise<void> {
+    return new Promise((resolve) => {
+        const callback = () => {
+            resolve()
+            haltEvents.removeEventListener('unHalted', callback)
+        }
+        haltEvents.addEventListener('unHalted', callback)
+    })
+}
+
+function gotoInterrupt() {
+    // console.log("INTERRUPT!", runtime.pc.mem[0x7000])
+    if (!runtime.pc.mem[0x7000])
+        return;
+    runtime.pc.halted = false
+    haltEvents.dispatchEvent(new Event('unHalted'));
+    runtime.pc.returnStack.push(runtime.pc.programPointer - 1);
+    runtime.pc.programPointer = runtime.pc.mem[0x7000]
+}
+
+const interruptInterval = setInterval(gotoInterrupt, 10)
 
 const endInst = (Object.entries(runtime.pc.instructions) as [unknown, string][] as [number, string][])
     .find(([_, b]: [number, string]) => b == 'end')
@@ -84,14 +99,14 @@ while (
     try {
         const definition = Object.entries(runtime.pc.instructions).find(([a]) => +a == runtime.pc.mem[runtime.pc.programPointer])
         if (!definition || !definition[1]) throw `what the fuck is that (unknown instruction)
-at ${runtime.pc.programPointer} (${runtime.pc.programPointer.toString(16)}/${(runtime.pc.programPointer * 2).toString(16)}/${(runtime.pc.programPointer * 2 - (2**16)).toString(16)})
+at ${runtime.pc.programPointer} (${runtime.pc.programPointer.toString(16)}/${(runtime.pc.programPointer * 2).toString(16)}/${(runtime.pc.programPointer * 2 - (2 ** 16)).toString(16)})
 instruction: ${runtime.pc.mem[runtime.pc.programPointer]}`
         const instruction = definition[1]
-        runtime.pc.programPointer ++
+        runtime.pc.programPointer++
         // console.debug(instruction, runtime.instructions, definition)
         const args = [];
         if (Deno.args.includes('-d'))
-        console.debug(runtime.pc.programPointer, definition, instruction, runtime.pc.mem[runtime.pc.programPointer+1])
+            console.debug(runtime.pc.programPointer, definition, instruction, runtime.pc.mem[runtime.pc.programPointer + 1])
         while (args.length < runtime.instructions[instruction].args) {
             args.push(runtime.pc.mem[runtime.pc.programPointer])
             runtime.pc.programPointer++
@@ -103,9 +118,12 @@ instruction: ${runtime.pc.mem[runtime.pc.programPointer]}`
         console.error(error);
         break;
     }
+    if (runtime.pc.halted) {
+        await waitUntilNotInterrupted()
+    }
 }
 
-// clearInterval(interruptInterval)
+clearInterval(interruptInterval)
 
 if (Deno.args.includes('-d'))
     console.debug(Object.values(runtime.pc.instructions))
