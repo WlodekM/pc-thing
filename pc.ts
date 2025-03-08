@@ -3,6 +3,7 @@ type Registers = [number, number, number]
 export class PC {
     registers: Registers = new Array<number>(3).fill(0) as Registers
     regNames: string = 'abc'
+    halted: boolean = false
     mem = new Array<number>(2**16).fill(0)
     getSegment: undefined | ((segment: number) => Uint16Array) = undefined;
     getMem(addr: number): number {
@@ -68,7 +69,8 @@ export class PC {
         35: 'shr',
         36: 'sbc',
         37: 'dec', // extra/deprecated
-        38: 'decr' // extra/deprecated
+        38: 'decr', // extra/deprecated
+        39: 'clr'
     }
     constructor(diskSupport = false) {
         if (diskSupport) {
