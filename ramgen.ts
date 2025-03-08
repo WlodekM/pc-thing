@@ -14,6 +14,10 @@ for (const filename of dir) {
 
 commands.push('end')
 
+commandData.end = {
+    args: 0
+}
+
 interface ObjectFile {
     // number is the ammount of bytes to skip
     code: (string | number)[],
@@ -63,6 +67,7 @@ for (const element of code) {
     })
     const inst = Object.entries(pc.instructions).find(([_, b]) => b == command);
     if (!inst) throw 'erm,, what the sigma ' + command + ' (' + inst + ')'
+    if (!commandData[command]) throw 'no command data for ' + command + ' (' + inst + ')'
     if (commandData[command].args != args.length)
         throw `mismatch of ${command} arg length ${commandData[command].args} != ${args.length}`
     instructions.push([+inst[0], ...parsedArgs])
@@ -78,9 +83,9 @@ for (const instr of instructions) {
 
 let i = 0
 for (const instr of instructions) {
-    console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)
+    // console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)
     if (typeof instr == 'number') {
-        console.log(ram.length, instr, new Array<number>(instr).fill(0))
+        // console.log(ram.length, instr, new Array<number>(instr).fill(0))
         ram.push(...new Array<number>(instr).fill(0))
         continue;
     }
@@ -105,7 +110,7 @@ for (const instr of instructions) {
 
 
 for (const element of object.data) {
-    console.log(instructionAddresses[element[0]] - offset, element[0], element[1])
+    // console.log(instructionAddresses[element[0]] - offset, element[0], element[1])
     ram.splice(instructionAddresses[element[0]] - offset, element[1].length, ...element[1])
 }
 
