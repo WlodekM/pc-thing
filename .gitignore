@@ -7,3 +7,4 @@ code.o
 *.bin
 *.img
 thefile
+riscv
