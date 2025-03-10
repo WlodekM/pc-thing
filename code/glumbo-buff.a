@@ -192,7 +192,7 @@ parse_input:
         break
     
     case_c:
-        halt
+        end
         break
 
     default:
