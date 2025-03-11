@@ -1,0 +1,60 @@
+# the SHIT PC(R) INSTRUCTION SET(TM) 2 #
+
+> format:
+>
+> OPCODE[ARGS] -> (OUT/VOID)
+
+## Math ##
+```
+ADD[REG1, REG2, REG3] -> (REG1) Add
+SUB[REG1, REG2, REG3] -> (REG1) Subtract
+MUL[REG1, REG2, REG3] -> (REG1) Multiply
+DIV[REG1, REG2, REG3] -> (REG1) Divide
+MOD[REG1, REG2, REG3] -> (REG1) Modulo
+SHL[REG1, REG2]       -> (REG1) Shift left
+SHR[REG1, REG2]       -> (REG1) Shift right
+CMP[REG1, REG2]       -> (VOID) Compare
+CMR[REG1, REG2, REG3] -> (REG1) Compare Register
+AND[REG1, REG2, REG3] -> (REG1) Logical AND
+OR[REG1, REG2, REG3]  -> (REG1) Logical OR
+XOR[REG1, REG2, REG3] -> (REG1) Logical XOR
+NOT[REG1, REG2]       -> (REG1) Logical NOT
+```
+## Registers ##
+```
+MOV[REG, VAL]          -> (REG) Move
+SWP[REG1, REG2] -> (REG1, REG2) Swap register
+```
+## Memory ##
+```
+LD[REG1, REG2]   -> (REG1) Load from address
+SET[REG1, REG2] -> ($REG1) Set address
+```
+## Jumping & stuff ##
+```
+JMP[REG] -> (VOID) Jump to address
+JNZ[REG] -> (VOID) Jump if flag is non-zero
+JZ[REG]  -> (VOID) Jump if flag is zero
+JMR[REG] -> (VOID) Jump with return
+RET[]    -> (VOID) Return
+```
+## Stack ##
+> [!NOTE]
+> The stack limit is 256, and it is only enabled once $7000h is set to a stack address
+> 
+> Keep in mind that the stack pointer goes **down** from that address
+```
+PUSH[REG] -> (VOID) Push to stack
+POP[REG]  -> (REG)  Pop from stack
+```
+## System ##
+```
+HALT[] -> (VOID) Halt the processor
+```
+
+#### extra ####
+
+this might get replaced with a thing yin the ram in the future possibly
+```
+SYS[TYPE, ...] -> (VOID) Systemcall
+```

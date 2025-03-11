@@ -5,11 +5,11 @@ const pc = new PC()
 const commands = []
 const commandData: Record<string, any> = {}
 
-const dir = Deno.readDirSync('instructions');
+const dir = Deno.readDirSync('instructions_new');
 
 for (const filename of dir) {
     commands.push(filename.name.replace(/\..*?$/g, ''))
-    commandData[filename.name.replace(/\..*?$/g, '')] = (await import('./instructions/' + filename.name)).default
+    commandData[filename.name.replace(/\..*?$/g, '')] = (await import('./instructions_new/' + filename.name)).default
 }
 
 commands.push('end')

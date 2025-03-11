@@ -42,11 +42,11 @@ runtime.pc.getSegment = function getSegment(segment: number): Uint16Array {
     return Uint16Array.from(seg.fill(seg.length, 512))
 }
 
-const dir = Deno.readDirSync('instructions');
+const dir = Deno.readDirSync('instructions_new');
 
 for (const filename of dir) {
     runtime.addInstruction(filename.name.replace(/\..*?$/g, ''),
-        (await import('./instructions/' + filename.name)).default)
+        (await import('./instructions_new/' + filename.name)).default)
 }
 
 runtime.addInstruction('end', { function: () => { }, args: 0 })
