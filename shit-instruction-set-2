@@ -28,7 +28,7 @@ SWP[REG1, REG2] -> (REG1, REG2) Swap register
 ## Memory ##
 ```
 LD[REG1, REG2]   -> (REG1) Load from address
-SET[REG1, REG2] -> ($REG1) Set address
+STR[REG1, REG2] -> ($REG1) Set address
 ```
 ## Jumping & stuff ##
 ```
