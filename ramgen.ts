@@ -1,6 +1,5 @@
 import { PC } from "./pc.ts";
 const pc = new PC()
-// TODO - finish this maybe
 
 const commands = []
 const commandData: Record<string, any> = {}

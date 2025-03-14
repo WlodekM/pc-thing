@@ -1,3 +1,6 @@
+import dedent from "npm:dedent";
+import { PC } from "./pc.ts";
+const pc = new PC()
 const labels: Record<string, string> = {}
 
 const code = new TextDecoder()
@@ -25,6 +28,25 @@ const object: ObjectFile = {
     code: [],
     data: [],
     offset: 2**16 / 2
+}
+
+const advAliases: Record<string, string> = {
+    'mov,reg,addr': dedent`\
+        mov d @1
+        ld @0 d`,
+    'mov,addr,reg': dedent`\
+        mov d @0
+        str d @1`,
+    'str,reg,addr': dedent`\
+        mov d @1
+        str d @0`,
+    'ld,reg,addr':  dedent`\
+        mov d @1
+        ld @0 d`,
+    'add,': `add c a b`,
+    'sub,': `sub c a b`,
+    'mul,': `mul c a b`,
+    'div,': `div c a b`,
 }
 
 function processCode(rcode: string, offset: number = 0): (string | number)[] {
@@ -191,7 +213,24 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
             el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
         }
-        result.push(el)
+        const [cmd, ...args] = el.split(' ');
+        const argtypes = args.map((a: string) => {
+            if (pc.regNames.split('').includes(a)) return 'reg';
+            if (a.match(/^\$[0-9A-Fa-f]+$/g)) return 'addr';
+            return 'val';
+        })
+        if (advAliases[`${cmd},${argtypes.join(',')}`]) {
+            el = advAliases[`${cmd},${argtypes.join(',')}`].replace(/@([0-9]+)/g, (_m, arg) => {
+                if (argtypes[+arg] == 'addr') {
+                    return args[+arg].replace('$', '')
+                }
+                return args[+arg]
+            })
+            result.push(...el.split('\n'));
+            i += el.split('\n').length;
+            continue;
+        }
+        result.push(el.replace(/\$[0-9A-Fa-f]+/g, (_, addr) => addr))
         i++
     }
     return result
