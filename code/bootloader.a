@@ -3,7 +3,8 @@ start:
     mov a 0
     str a [gottenNZ]
     ; currSector -> A
-    ld a [currSector]
+    mov a [currSector]
+    ld a a
     str a 0x7cff
 
     mov b 512
@@ -17,43 +18,52 @@ start:
     str a [ptrThing]
 
     copySector:
-        ld a [sectorOffset]
-        ld b [bytePointer]
-        add
+        mov a [sectorOffset]
+        ld a a
+        mov b [bytePointer]
+        ld b b
+        add c a b
         ;
         swp a c
         mov b 0x8000 ; default code position
-        add
+        add c a b
         str c [targetPointer]
 
         ; ld a [sectorOffset]
         mov a 0x7d00
         ; add
         ; swp c a
-        ld b [ptrThing]
-        add
-        ld b [targetPointer]
+        mov b [ptrThing]
+        ld b b
+        add c a b
+        mov b [targetPointer]
+        ld b b
         swpm c b
 
-        ldr a c
+        ld a c
         mov b 0
         crr a a b
         mov b 1
         xor
         swp a c
-        ld b [gottenNZ]
-        or
-        str c [gottenNZ]
+        mov b [gottenNZ]
+        ld b b
+        or c a b
+        mov a [gottenNZ]
+        str c a
 
         ;continue loop
         ; pointer to 8xxx
-        ld a [ptrThing]
+        mov a [ptrThing]
+        ld a a
         mov b 1
-        add
-        str c [ptrThing]
+        add c a b
+        mov a [ptrThing]
+        str c a
 
         ; pointer offset for sector thing
-        ld a [bytePointer]
+        mov a [bytePointer]
+        ld a a
         mov b 1
         add
         str c [bytePointer]
@@ -62,11 +72,14 @@ start:
         cmp c 513
         jz copySector
     ; continue main loop
-    ld a [currSector]
+    mov a [currSector]
+    ld a a
     mov b 1
-    add
-    str c [currSector]
-    ld a [gottenNZ]
+    add c a b
+    mov a [currSector]
+    str c a
+    mov a [gottenNZ]
+    ld a a
     cmp a 0
     jz start
     ;escaped

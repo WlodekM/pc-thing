@@ -1,33 +1,41 @@
 start:
     copyLoop:
-        ld a [codePointer]
+        mov a [codePointer]
+        ld a a
         mov b 0x6000
-        add
-        str c [targetPointer]
+        add c a b
+        mov a [targetPointer]
+        str c a
 
         mov a codeStart
-        ld b [codePointer]
-        add
+        mov b [codePointer]
+        ld b b
+        add c a b
         
-        ld a [targetPointer]
+        mov a [targetPointer]
+        ld a a
         swpm a c
         
-        ld a [codePointer]
+        mov a [codePointer]
+        ld a a
         mov b 1
-        add
-        str c [codePointer]
+        add c a b
+        mov a
+        str c [codePointer] 
         ; continue loop
+            mov b [targetPointer]
             ; (byte we just copied) -> B
-            ldm b [targetPointer]
+            ld b b
             ; (next byte) -> A
-            ldr a c
+            ld a c
             ; C = A (aka next byte) == 0
-            crp c a 0
+            cmr c a 0
             ; A = B (aka last byte) == 1E (end instruction)
-            crp a b 0x1e
+            cmr a b 0x1e
             swp c b ; C -> B
-            and ; c=a&&b
-            cmp c 1 ; c==1?
+            and c a b; c=a&&b
+            mov a 1
+            cmp c a ; c==1?
             jz copyLoop ; continue if c != 1
     jmp 0x6001
 
