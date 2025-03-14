@@ -1,2 +1,1 @@
 jsr=jmr
-mov=put

@@ -1,8 +1,8 @@
 import * as lib from "./lib.ts";
-type Registers = [number, number, number]
+type Registers = [number, number, number, number]
 export class PC {
-    registers: Registers = new Array<number>(3).fill(0) as Registers
-    regNames: string = 'abc'
+    registers: Registers = new Array<number>(4).fill(0) as Registers
+    regNames: string = 'abcd'
     halted: boolean = false
     mem = new Array<number>(2**16).fill(0)
     getSegment: undefined | ((segment: number) => Uint16Array) = undefined;
@@ -31,46 +31,29 @@ export class PC {
     returnStack: number[] = []
     // the instruction set, in no particular order :3
     instructions: Record<number, string> = {
-        0: "crr",
-        1: "jz",
-        2: "sys",
-        3: "swp",
-        4: "sub",
-        5: "str",
-        6: "ldr",
-        7: "add",
-        8: "cmr",
-        9: "mod",
-        10: "srm",
-        11: "or",
-        12: "jnz",
-        13: "put",
-        14: "ld",
-        15: "xor",
-        16: "div",
-        17: "srr",
-        18: "jmp",
-        19: "and",
-        20: "ldm", // extra/deprecated
-        21: "swpm",
-        22: "dbg",
-        23: "not",
-        24: "cmp",
-        25: "ret",
-        26: "halt",
-        27: "jnzr",
-        28: "mul",
-        29: "jmr",
-        30: "end",
-        31: "crp", // extra/deprecated
-        32: "inc", // extra/deprecated
-        33: "incr", // extra/deprecated
-        34: 'shl',
-        35: 'shr',
-        36: 'sbc',
-        37: 'dec', // extra/deprecated
-        38: 'decr', // extra/deprecated
-        39: 'clr'
+        0:  'mov',
+        1:  'swp',
+        2:  'ld',
+        3:  'str',
+        4:  'add',
+        5:  'sub',
+        6:  'mul',
+        7:  'div',
+        8:  'mod',
+        9:  'shl',
+        10: 'shr',
+        11: 'cmp',
+        12: 'cmr',
+        13: 'and',
+        14: 'or',
+        15: 'xor',
+        16: 'not',
+        17: 'push',
+        18: 'pop',
+        19: 'halt',
+        20: 'sys', // extra
+        
+        31: 'end'
     }
     constructor(diskSupport = false) {
         if (diskSupport) {

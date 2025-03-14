@@ -41,6 +41,8 @@ RET[]    -> (VOID) Return
 ## Stack ##
 > [!NOTE]
 > The stack limit is 256, and it is only enabled once $7000h is set to a stack address
+>
+> $7001h has the pointer
 > 
 > Keep in mind that the stack pointer goes **down** from that address
 ```
