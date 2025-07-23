@@ -5,7 +5,7 @@ export default {
         const r1 = this.lib.parseReg(reg1);
         const r2 = this.lib.parseReg(reg2);
         const r3 = this.lib.parseReg(reg3);
-        this.registers[r1] = +(this.registers[r2] == this.registers[r3]);
+        this.registers[r1] = this.flagZCN(this.registers[r2] - this.registers[r3], false)
     },
     args: 3
 }

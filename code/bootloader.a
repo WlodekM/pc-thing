@@ -38,13 +38,23 @@ start:
         add c a b
         mov b [targetPointer]
         ld b b
-        swpm c b
+        ; swp c b
+        ; a <- $b
+        ld a b
+        push a ; push b
+        ld a c
+        ; push c ; push c
+        str b a ; $b <- c
+        pop a
+        ; $c <- b
+        str c a
+        ; swpm c b
 
         ld a c
         mov b 0
-        crr a a b
+        cmr a a b
         mov b 1
-        xor
+        xor c a b
         swp a c
         mov b [gottenNZ]
         ld b b

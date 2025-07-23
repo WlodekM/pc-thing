@@ -8,3 +8,5 @@ code.o
 *.img
 thefile
 riscv
+ast.json
+code.txt

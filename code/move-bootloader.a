@@ -1,4 +1,8 @@
 start:
+    ; init stack
+    mov a 0x6000
+    mov b 0x7000
+    str b a
     copyLoop:
         mov a [codePointer]
         ld a a
@@ -14,13 +18,23 @@ start:
         
         mov a [targetPointer]
         ld a a
-        swpm a c
+        ; swp a c
+        ; a <- $b
+        ld d c
+        push d ; push b
+        ld d a
+        ; push a ; push a
+        str c d ; $b <- a
+        pop d
+        ; $a <- b
+        str a d
+        ; swpm c b
         
         mov a [codePointer]
         ld a a
         mov b 1
         add c a b
-        mov a
+        ; mov a
         str c [codePointer] 
         ; continue loop
             mov b [targetPointer]
