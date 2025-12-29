@@ -5,5 +5,6 @@ export default {
         // this.programPointer = 0xFFFF - 1
         this.halted = true
     },
-    args: 0
+    args: 0,
+    arg_types: ''
 }

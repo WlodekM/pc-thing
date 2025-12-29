@@ -7,5 +7,6 @@ export default {
         this.returnFlag = +(this.getMem(this.registers[r2]) != 0);
         this.registers[r1] = this.getMem(this.registers[r2])
     },
-    args: 2
+    args: 2,
+    arg_types: 'rr'
 }

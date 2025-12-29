@@ -9,7 +9,7 @@ const pc = new PC()
 const tokenizer = new Tokenizer(input);
 const tokens = tokenizer.tokenize();
 
-console.log(tokens)
+// console.log(tokens)
 
 const astGenerator = new ASTGen(tokens);
 
@@ -22,11 +22,11 @@ try {
     Deno.exit(1)
 }
 
-console.log(ast)
+// console.log(ast)
 
 const compiler = new Compiler(ast);
 
-compiler.functions_start += 2
+compiler.functions_start += 5
 
 for (const node of compiler.AST) {
     compiler.compile(node)
@@ -48,10 +48,6 @@ instructions.push({
     opcode: 'halt',
     args: []
 })
-instructions.push({
-    opcode: 'halt',
-    args: []
-})
 const end = instructions
 	.map(inst => 1 + inst.args.length)
 	.reduce((p,c)=>p+c,0);
@@ -59,11 +55,15 @@ instructions[0].args.push(end+0x8001)
 instructions.push(...compiler.instructions)
 instructions.push({
 	opcode: 'mov',
-	args: [97, compiler.function_locations._start]
+	args: [97, compiler.function_locations._start+1+2]
 })
 instructions.push({
-	opcode: 'jmp',
+	opcode: 'jmr',
 	args: [97]
+})
+instructions.push({
+    opcode: 'halt',
+    args: []
 })
 
 Deno.writeTextFileSync(dirname+'ast.json', JSON.stringify(ast, null, 4))
@@ -74,7 +74,7 @@ Deno.writeTextFileSync(dirname+'depths.json', JSON.stringify(compiler.depth, nul
 const bin = Uint8Array.from(instructions.map<number[]>(i => {
     const goog = Object.entries(pc.instructions).find(([_, opc]) => opc == i.opcode);
     if (!goog) throw 'whar';
-    console.log(goog, i)
+    // console.log(goog, i)
     return [+goog[0], 0, ...(i.args.map((a) => [a & 0x00FF, (a & 0xFF00) >> 8])).flat()]
 }).reduce<number[]>((p, c) => {p.push(...c);return p}, [] as number[]));
 Deno.writeFileSync(dirname+'../iram.bin', bin)

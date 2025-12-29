@@ -7,5 +7,6 @@ export default {
         // this.returnFlag = +(this.registers[r1] == this.registers[r2]);
         this.flagZCN(this.registers[r1] - this.registers[r2])
     },
-    args: 2
+    args: 2,
+    arg_types: 'rr'
 }

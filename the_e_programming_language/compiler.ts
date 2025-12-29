@@ -140,6 +140,10 @@ export default class Compiler {
 			for (const node of fnDeclNode.body) {
 				this.compile(node, depth + 1)
 			}
+			this.instructions.push({
+				opcode: 'ret',
+				args: []
+			})
 			
 			const length = this.instructions
 				.map(k => 1 + k.args.length)
@@ -178,6 +182,20 @@ export default class Compiler {
 					})
 					this.status.A = NaN
 					break;
+				
+				case '>':
+					this.instructions.push({
+						opcode: 'cmr',
+						args: [A, B, A]
+					})
+					this.status.A = NaN
+					this.mov('B', 1)
+					this.instructions.push({
+						opcode: 'and',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
 			
 				default:
 					throw 'oh no'
@@ -189,7 +207,7 @@ export default class Compiler {
 				.map(k => 1 + k.args.length)
 				.reduce((prev, curr) => {
 					return prev + curr 
-				}, 0);
+				}, 0) + this.functions_start;
 			this.reset_status()
 			for (const node of whileNode.branch) {
 				this.compile(node, depth + 1)
@@ -255,7 +273,7 @@ export default class Compiler {
 			this.mov('A', numNode.value)
 			this.push('A')
 		} else if (node.type == 'FunctionCall') {
-			//console.log('meow', this.function_locations)
+			console.log('meow', this.function_locations)
 			this.mov('A', this.function_locations[
 				(node as FunctionCallNode).identifier
 			]);

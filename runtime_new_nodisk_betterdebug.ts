@@ -274,14 +274,16 @@ do {
     }
 } while (
     runtime.pc.mem[runtime.pc.programPointer] != endInstId &&
-    runtime.pc.programPointer != 0xFFFF - 1 && c < 50)
+    runtime.pc.programPointer != 0xFFFF - 1 && c < 50
+    && !runtime.pc.halted)
 
 // clearInterval(interruptInterval)
 
 if (Deno.args.includes('debug'))
     console.debug(Object.values(runtime.pc.instructions))
-console.debug('end of execution, dumping ram', runtime.pc.mem)
+// console.debug('end of execution, dumping ram', runtime.pc.mem)
 Deno.writeFileSync('ram.bin', Uint8Array.from(runtime.pc.mem.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
+if (Deno.args.includes('-a'))
 new Deno.Command('hexdump', {
     args: ['-C', 'ram.bin']
 }).spawn()

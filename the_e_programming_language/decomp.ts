@@ -14,6 +14,8 @@ const bin = Uint16Array.from(
 
 const pc = new PC();
 
+type instruction = {function: (this: PC, argv: number[]) => void, args: number,  arg_types: string}
+
 class Runtime {
     pc: PC = new PC()
     instructions: Record<string, instruction> = {}
@@ -41,10 +43,44 @@ class Runtime {
 
 const runtime = new Runtime()
 
+const dir = Deno.readDirSync('../instructions_new');
 
+for (const filename of dir) {
+    runtime.addInstruction(filename.name.replace(/\..*?$/g, ''),
+        (await import('../instructions_new/' + filename.name)).default)
+}
+
+runtime.addInstruction('end', {function: () => { }, args: 0,arg_types:''})
 
 let decomp = ''
 
-console.log(bin, pc)
+// console.log(bin)
 
+let i = 0;
 
+while (i < bin.length) {
+    const word: number = bin[i];
+	const instruction = pc.instructions[word];
+	const start = i;
+	i++;
+	if (!instruction) {
+		decomp += `unk 0x${word.toString(16)}\n`;
+		continue;
+	}
+	decomp += instruction
+	const instruction_data = runtime.instructions[instruction]!;
+	for (let j = 0; j < instruction_data.args; j++) {
+		const arg_value = bin[i];
+		const arg_type = instruction_data.arg_types[j]!;
+		const arg_string = (({
+			r: b => String.fromCharCode(b)
+		} as Record<string,(uh:number)=>string>)
+			[arg_type] ?? (a=>a))(arg_value);
+		decomp += ` ${arg_string}`
+		i++;
+	}
+	decomp+=`    \t; ${start+0x8000}\t${start}`
+	decomp+='\n'
+}
+
+console.log(decomp)

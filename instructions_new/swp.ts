@@ -11,5 +11,6 @@ export default {
         // this.registers[r1] = data2
         // this.registers[r2] = data1
     },
-    args: 2
+    args: 2,
+    arg_types: 'rr'
 }

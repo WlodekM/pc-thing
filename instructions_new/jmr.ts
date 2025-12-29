@@ -6,5 +6,6 @@ export default {
         this.returnStack.push(this.programPointer);
         this.programPointer = this.registers[r1];
     },
-    args: 1
+    args: 1,
+    arg_types: 'r'
 }

@@ -5,5 +5,6 @@ export default {
         const r = this.lib.parseReg(reg)
         this.registers[r] = Number(data) ?? 0
     },
-    args: 2
+    args: 2,
+    arg_types: 'rn'
 }

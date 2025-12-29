@@ -8,5 +8,6 @@ export default {
         this.setMem(this.getMem(0x7000) + this.getMem(0x7001), this.registers[r1])
         this.setMem(0x7001, this.getMem(0x7001) + 1)
     },
-    args: 1
+    args: 1,
+    arg_types: 'r'
 }

@@ -8,5 +8,6 @@ export default {
         this.returnFlag = +((this.registers[r2] + this.registers[r3]) != 0);
         this.registers[r1] = this.registers[r2] + this.registers[r3]
     },
-    args: 3
+    args: 3,
+    arg_types: 'rrr'
 }

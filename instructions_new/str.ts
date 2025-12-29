@@ -6,5 +6,6 @@ export default {
         const r2 = this.lib.parseReg(reg2);
         this.setMem(this.registers[r1], this.registers[r2]);
     },
-    args: 2
+    args: 2,
+    arg_types: 'rr'
 }

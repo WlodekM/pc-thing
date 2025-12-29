@@ -56,5 +56,6 @@ export default {
                 throw 'unknown syscall id ' + this.registers[0]
         }
     },
-    args: 0
+    args: 0,
+    arg_types: ''
 }

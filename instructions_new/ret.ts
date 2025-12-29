@@ -6,5 +6,5 @@ export default {
         if (!returnAddr) throw 'return stack empty';
         this.programPointer = returnAddr;
     },
-    args: 1
+    args: 0
 }

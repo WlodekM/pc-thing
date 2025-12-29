@@ -7,5 +7,6 @@ export default {
         const r3 = this.lib.parseReg(reg3);
         this.registers[r1] = this.flagZCN(this.registers[r2] - this.registers[r3], false)
     },
-    args: 3
+    args: 3,
+    arg_types: 'rrr'
 }

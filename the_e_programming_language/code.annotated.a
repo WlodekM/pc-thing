@@ -1,0 +1,58 @@
+	mov a 32885    	; 32768	0
+	jmp a    	; 32771	3
+	mov a 98    	; 32773	5
+	mov b 4096    	; 32776	8
+	str b a    	; 32779	11
+	ret    	; 32782	14
+	mov a 21    	; 32783	15
+	mov b 0    	; 32786	18
+	str b a    	; 32789	21
+	mov a 30    	; 32792	24
+	str b a    	; 32795	27
+.loop:
+	.load_ch:
+		mov a 1    	; 32798	30
+		ld b a    	; 32801	33
+		push b    	; 32804	36
+	.set_stdout: ; stdout = ch
+		pop a    	; 32806	38
+		mov b 4096    	; 32808	40
+		str b a    	; 32811	43
+	.increment: ; ch = ch + 1
+		mov a 1    	; 32814	46
+		ld b a    	; 32817	49
+		; push b    	; 32820	52
+		; push a    	; 32822	54
+		; pop b    	; 32824	56
+		; pop a    	; 32826	58
+		add a a b    	; 32828	60
+		str b a    	; 32832	64
+.check:
+	mov a 1    	; 32835	67
+	ld b a    	; 32838	70
+	push b    	; 32841	73
+	mov a 104    	; 32843	75
+	push a    	; 32846	78
+	pop b    	; 32848	80
+	pop a    	; 32850	82
+	cmr a b a    	; 32852	84
+	mov b 1    	; 32856	88
+	and a a b    	; 32859	91
+	mov b 0    	; 32863	95
+	cmp a b    	; 32866	98
+	mov a 32798    	; 32869	101
+	jz a    	; 32872	104
+.exit:
+	mov a 33    	; 32874	106
+	mov b 4096    	; 32877	109
+	str b a    	; 32880	112
+	ret    	; 32883	115
+	halt    	; 32884	116
+	str b a    	; 32885	117
+	mov a 97    	; 32888	120
+	mov b 1    	; 32891	123
+	str b a    	; 32894	126
+	mov a 32786    	; 32897	129
+	jmr a    	; 32900	132
+	halt    	; 32902	134
+
