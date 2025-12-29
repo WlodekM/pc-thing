@@ -50,30 +50,43 @@ export class Register<T=number> extends BitField {
     }
 }
 
+export interface Segment {
+	start: number,
+	end: number,
+	get_value?: (addr: number) => number,
+	set_value?: (addr: number, value: number) => void
+}
+
 type Registers = [number, number, number, number]
 export class PC {
     registers: Registers = new Array<number>(4).fill(0) as Registers
     regNames: string = 'abcd'
     halted: boolean = false
     mem = new Array<number>(2**16).fill(0)
-    getSegment: undefined | ((segment: number) => Uint16Array) = undefined;
+    segments: Record<string, Segment> = {}
+    find_segment(addr: number): Segment | undefined {
+    	for (const segment_name in this.segments) {
+    		const segment = this.segments[segment_name];
+    		if (addr < segment.start)
+    			continue;
+    		if (addr > segment.end)
+   				continue;
+   			return segment;
+    	}
+    }
     getMem(addr: number): number {
         if (addr < 0 || addr > 2**16)
             throw 'invalid address';
+    	const segment = this.find_segment(addr);
+    	if (segment)
+    		return segment.get_value ? segment.get_value(addr) : 0;
         //TODO - memory mapping
         return this.mem[addr];
     }
     setMem(addr: number, data: number) {
-        if (this.getSegment && addr == 0x7cff) {
-            const segment = this.getSegment(data)
-            for (let i = 0; i < 512; i++) {
-                this.mem[0x7d00 + i] = segment.length > i ? segment[i] : 0;
-            }
-            return;
-        }
-        if (addr >= 0x7d00 && addr <= 0x7fff && this.getSegment) {
-            return;
-        }
+       	const segment = this.find_segment(addr);
+       	if (segment)
+       		return segment.set_value ? segment.set_value(addr, data) : 0;
         this.mem[addr] = Math.floor(data) % 2**16
     }
     status:          Register<8>  = new Register(8);

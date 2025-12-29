@@ -7,9 +7,10 @@ export interface ASTNode {
 export interface VariableDeclarationNode extends ASTNode {
     type: "VariableDeclaration";
     identifier: string;
-    value: ASTNode;
+    value?: ASTNode;
     vtype: string;
     length: number;
+    location?: number
 }
 
 export interface FunctionDeclarationNode extends ASTNode {
@@ -160,15 +161,21 @@ export default class AST {
     private parseStatement(): ASTNode {
         if (this.matchTk([TokenType.TYPE])) {
             const type = this.advance().value
+            
             let len = 1;
             if (this.match(TokenType.LBRACKET)) {
                 len = Number(this.expect(TokenType.NUMBER, 'expected number after [').value);
                 this.expect(TokenType.RBRACKET, 'expected ] after length')
             }
             const identifier = this.expect(TokenType.IDENTIFIER, "expected var name after type (hint: functions dont have return types yet").value;
-            this.expect(TokenType.ASSIGN, "expected = after var name");
-            const value = this.parseAssignment(false);
-            return { type: "VariableDeclaration", identifier, value, vtype: type, length: len } as VariableDeclarationNode;
+           	let loc;
+           	if (this.match(TokenType.AT)) {
+           		loc = Number(this.expect(TokenType.NUMBER, 'expected number after @').value)
+           	}
+            let value;
+            if (this.match(TokenType.ASSIGN))
+            	value = this.parseAssignment(false);
+            return { type: "VariableDeclaration", identifier, value, vtype: type, length: len, location: loc } as VariableDeclarationNode;
         }
 
         if (this.match(TokenType.FN_DECL)) {

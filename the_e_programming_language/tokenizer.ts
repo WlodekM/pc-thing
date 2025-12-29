@@ -1,23 +1,24 @@
 export enum TokenType {
-    TYPE       = "TYPE",
-    FN_DECL    = "FN_DECL",
-    LITERAL    = "LITERAL",
-    NUMBER     = "NUMBER",
-    LPAREN     = "LPAREN",
-    RPAREN     = "RPAREN",
-    LBRACE     = "LBRACE",
-    RBRACE     = "RBRACE",
-    LBRACKET   = "LBRACKER",
-    RBRACKET   = "RBRACKER",
-    COMMA      = "COMMA",
-    WHILE      = "WHILE",
-    IF         = "IF",
-    ELSE       = "ELSE",
-    ASSIGN     = "ASSIGN",
-    BINOP      = "BINOP",
-    IDENTIFIER = "IDENTIFIER",
+    TYPE		= "TYPE",
+    FN_DECL		= "FN_DECL",
+    LITERAL		= "LITERAL",
+    NUMBER		= "NUMBER",
+    LPAREN		= "LPAREN",
+    RPAREN		= "RPAREN",
+    LBRACE		= "LBRACE",
+    RBRACE		= "RBRACE",
+    LBRACKET	= "LBRACKER",
+    RBRACKET	= "RBRACKER",
+    COMMA		= "COMMA",
+    WHILE		= "WHILE",
+    IF			= "IF",
+    ELSE		= "ELSE",
+    ASSIGN		= "ASSIGN",
+    BINOP		= "BINOP",
+    IDENTIFIER	= "IDENTIFIER",
+    AT			= "AT",
 
-    EOF        = "EOF",
+    EOF			= "EOF",
 }
 
 export interface Token {
@@ -111,11 +112,21 @@ export default class Tokenizer {
                 // else if (identifier === "for") tokens.push({ type: TokenType.FOR, value: identifier });
                 else tokens.push({ type: TokenType.IDENTIFIER, value: identifier });
             } else if (this.isDigit(char)) {
+            	let hex = false;
                 let number = char;
-                while (this.isDigit(this.peek())) {
+                if (char == '0' && this.peek() == 'x') {
+                	number = '';
+                	hex = true;
+                	this.advance();
+                }
+                const hexchars = 'abcdefABCDEF'.split('')
+                while (this.isDigit(this.peek()) || (hex && hexchars.includes(this.peek()))) {
                     number += this.advance();
                 }
-                tokens.push({ type: TokenType.NUMBER, value: number });
+                if (hex)
+                	tokens.push({ type: TokenType.NUMBER, value: parseInt(number,16).toString() });
+                else
+                	tokens.push({ type: TokenType.NUMBER, value: number });
             } else if (char === '"') {
                 let string = "";
                 while (this.peek() !== '"' && this.peek() !== "") {
@@ -137,6 +148,7 @@ export default class Tokenizer {
             else if (char === "*") tokens.push({ type: TokenType.BINOP, value: char });
             else if (char === "/") tokens.push({ type: TokenType.BINOP, value: char });
             else if (char === "%") tokens.push({ type: TokenType.BINOP, value: char });
+            else if (char === "@") tokens.push({ type: TokenType.AT, value: char });
             else if (char === "=" && this.peek() === '=') {
                 tokens.push({ type: TokenType.BINOP, value: char });
                 this.advance();
