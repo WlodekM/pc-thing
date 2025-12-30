@@ -10,3 +10,9 @@ thefile
 riscv
 ast.json
 code.txt
+node_modules
+the_e_programming_language/code.a
+the_e_programming_language/*.a
+deno.lock
+yarn.lock
+the_e_programming_language/depths.json

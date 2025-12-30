@@ -1,4 +1,4 @@
-import { AssignmentNode, ASTNode, BinaryExpressionNode, FunctionCallNode, FunctionDeclarationNode, IdentifierNode, IfNode, NumberNode, VariableDeclarationNode, WhileNode } from "./ast.ts";
+import { AssignmentNode, ASTNode, BinaryExpressionNode, FunctionCallNode, FunctionDeclarationNode, IdentifierNode, IfNode, LiteralNode, NumberNode, VariableDeclarationNode, WhileNode } from "./ast.ts";
 // import { PC } from "../pc.ts";
 // const pc = new PC();
 
@@ -30,7 +30,7 @@ type Opcode =
 	'jmr'  |
 	'ret'  |
 	'end';
-type Register = 97 | 98 | 99 | 100
+type Register = 'a' | 'b' | 'c' | 'd'
 
 interface Instruction {
 	opcode: Opcode,
@@ -43,21 +43,29 @@ const types: Record<string, number> = {
 	'char': 1
 }
 
-const A: Register = 97;
-const B: Register = 98;
-const C: Register = 99;
+const A = 'a';
+const B = 'b';
+const C = 'c';
 // deno-lint-ignore no-unused-vars
-const D: Register = 100;
+const D = 'd';
 
 export default class Compiler {
 	vars: Record<string, [number, number]> = {};
 	function_locations: Record<string, number> = {};
-	functions: Record<string, Instruction[]> = {};
+	functions: Record<string, string[]> = {};
 	comments: Record<number, string> = {};
 	depth: Record<number, number> = {};
 	AST: ASTNode[];
 	lastAddr: number = 0;
-	instructions: Instruction[] = [];
+	str_instructions: string[] = []
+	id = 0;
+	instructions = {
+		push(inst: Instruction) {
+			// this.compiler.ilength += inst.args.length + 1;
+			this.compiler.str_instructions.push(`${inst.opcode} ${inst.args.join(' ')}`.replace(/ $/,''))
+		},
+		compiler: null as unknown as Compiler
+	};
 	status: Record<string, number> = {
 		A: 0,
 		B: 0,
@@ -69,52 +77,51 @@ export default class Compiler {
 	//functions: Record<string, Instruction[]> = {}
 	constructor (ast: ASTNode[]) {
 		this.AST = ast
+		this.instructions.compiler = this;
 	}
 	mov(reg: 'A'|'B'|'C'|'D', value: number) {
 		if (this.status[reg] == value) return;
-		const reg_num = 'ABCD'.indexOf(reg)+A;
 		this.status[reg] = value;
 		return this.instructions.push({
 			opcode: 'mov',
-			args: [reg_num, value]
+			args: [reg.toLowerCase() as Register, value]
 		})
 	}
 	pop(reg: 'A'|'B'|'C'|'D') {
-		const reg_num = 'ABCD'.indexOf(reg)+A;
 		this.status[reg] = this.stack.pop() ?? NaN;
-		if (this.instructions.length > 0 &&
-			this.instructions.at(-1)!
-				.opcode == 'push' &&
-			this.instructions.at(-1)!
-				.args[0] == reg_num)
-			return this.instructions.pop();
+		if (this.str_instructions.length > 0 &&
+			this.str_instructions.at(-1)!
+				== ('push '+ reg))
+			return this.str_instructions.pop();
 		
 		this.instructions.push({
 			opcode: 'pop',
-			args: [reg_num]
+			args: [reg.toLowerCase() as Register]
 		});
 	}
 	push(reg: 'A'|'B'|'C'|'D') {
-		const reg_num = 'ABCD'.indexOf(reg)+A;
 		this.stack.push(this.status[reg])
 		this.instructions.push({
 			opcode: 'push',
-			args: [reg_num]
+			args: [reg.toLowerCase() as Register]
 		})
+	}
+	append(code: string) {
+		this.str_instructions.push(...code.split('\n'))
 	}
 	reset_status() {
 		this.status.A=this.status.B=this.status.C=this.status.D=NaN
 	}
-	get_addr() {
-		return this.instructions
-				.map(k => 1 + k.args.length)
-				.reduce((prev, curr) => {
-					return prev + curr 
-				}, 0) + this.functions_start
-	}
+	// get_addr() {
+	// 	return this.instructions
+	// 			.map(k => 1 + k.args.length)
+	// 			.reduce((prev, curr) => {
+	// 				return prev + curr 
+	// 			}, 0) + this.functions_start
+	// }
 	compile (node: ASTNode, depth = 1) {
-		this.comments[this.instructions.length] = node.type;
-		const start = this.instructions.length - 1;
+		// this.comments[this.instructions.length] = node.type;
+		// const start = this.instructions.length - 1;
 		if ((node as VariableDeclarationNode).type == 'VariableDeclaration') {
 			const varDeclNode = node as VariableDeclarationNode;
 			if (!types[varDeclNode.vtype]) throw 'unknown type';
@@ -139,10 +146,10 @@ export default class Compiler {
 			const fnDeclNode = node as FunctionDeclarationNode;
 			this.reset_status()
 
-			const prev_instructions = this.instructions;
-			this.function_locations[fnDeclNode.name] = this.functions_start;
+			const prev_instructions = this.str_instructions;
+			//this.function_locations[fnDeclNode.name] = this.functions_start;
 
-			this.instructions = []
+			this.str_instructions = [`_fn_${fnDeclNode.name}:`];
 
 			for (const node of fnDeclNode.body) {
 				this.compile(node, depth + 1)
@@ -152,15 +159,15 @@ export default class Compiler {
 				args: []
 			})
 			
-			const length = this.instructions
-				.map(k => 1 + k.args.length)
-				.reduce((prev, curr) => {
-					return prev + curr 
-				}, 0);
-			this.functions_start += length;
+			//const length = this.instructions
+			//	.map(k => 1 + k.args.length)
+			//	.reduce((prev, curr) => {
+			//		return prev + curr 
+			//	}, 0);
+			//this.functions_start += length;
 			
-			this.functions[fnDeclNode.name] = this.instructions;
-			this.instructions = prev_instructions;
+			this.functions[fnDeclNode.name] = this.str_instructions;
+			this.str_instructions = prev_instructions;
 		} else if ((node as BinaryExpressionNode).type == 'BinaryExpression') {
 			const binExpNode = node as BinaryExpressionNode;
 			this.compile(binExpNode.left, depth + 1)
@@ -171,6 +178,36 @@ export default class Compiler {
 				case '+':
 					this.instructions.push({
 						opcode: 'add',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
+				case '!=':
+					this.instructions.push({
+						opcode: 'cmr',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					this.mov('B', 0b0000_0010)
+					this.append('not a a')
+					
+					this.instructions.push({
+						opcode: 'and',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
+				case '==':
+					this.instructions.push({
+						opcode: 'cmr',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					this.mov('B', 0b0000_0010)
+					this.instructions.push({
+						opcode: 'and',
 						args: [A, A, B]
 					})
 					this.status.A = NaN
@@ -205,36 +242,31 @@ export default class Compiler {
 					break;
 			
 				default:
-					throw 'oh no'
+					throw `cannot handle binexp ${binExpNode.operator}`
 			}
 			this.push('A')
 		} else if ((node as WhileNode).type == 'While') {
 			const whileNode = node as WhileNode;
-			const start = this.instructions
-				.map(k => 1 + k.args.length)
-				.reduce((prev, curr) => {
-					return prev + curr 
-				}, 0) + this.functions_start;
+			// const start = this.ilength + this.functions_start;
+			const label = `.while${this.id++}`
+			this.reset_status()
+			this.append(`${label}_start:`)
+ 			this.compile(whileNode.condition)
+			this.pop('A')
+			this.mov('B', 0)
+			this.append(`cmp a b`)
+			this.append(`mov a [${label}_end]`)
+			this.append(`jz a`)
 			this.reset_status()
 			for (const node of whileNode.branch) {
 				this.compile(node, depth + 1)
 			}
+			this.append(`mov a [${label}_start]\njmp a`)
+			this.append(`${label}_end:`)
 			this.reset_status()
-			this.compile(whileNode.condition)
-			//this.reset_status()
-			this.pop('A')
-			this.mov('B', 0)
-			this.instructions.push({
-				opcode: 'cmp',
-				args: [A, B]
-			})
-			this.mov('A', start)
-			this.instructions.push({
-				opcode: 'jnz',
-				args: [A]
-			})
 		} else if ((node as IfNode).type == 'If') {
 			const ifNode = node as IfNode;
+			const label = `.if${this.id++}_end`
 			this.compile(ifNode.condition)
 			//this.reset_status()
 			this.pop('A')
@@ -243,8 +275,10 @@ export default class Compiler {
 				opcode: 'cmp',
 				args: [A, B]
 			})
-			this.mov('A', start)
-			const inst = this.instructions.at(-1)!
+			//this.mov('A', start)
+			this.str_instructions.push(`mov a [${label}]`)
+			this.status.a = NaN;
+			//const inst = this.str_instructions.length -1;
 			this.instructions.push({
 				opcode: 'jz',
 				args: [A]
@@ -253,8 +287,9 @@ export default class Compiler {
 			for (const node of ifNode.thenBranch) {
 				this.compile(node, depth + 1)
 			}
+			this.str_instructions.push(`${label}:`)
 			this.reset_status()
-			inst.args[1] = this.get_addr()
+			//inst.args[1] = this.get_addr()
 		} else if ((node as AssignmentNode).type == 'Assignment') {
 			const assNode = node as AssignmentNode;
 			this.compile(assNode.value, depth + 1)
@@ -302,10 +337,22 @@ export default class Compiler {
 			this.mov('A', numNode.value)
 			this.push('A')
 		} else if (node.type == 'FunctionCall') {
-			console.log('meow', this.function_locations)
-			this.mov('A', this.function_locations[
-				(node as FunctionCallNode).identifier
-			]);
+			const fncNode = node as FunctionCallNode;
+			if (fncNode.identifier == '__asm__') {
+				const code: string[] = []
+				for (const arg of fncNode.args) {
+					if (arg.type == 'Identifier') {
+						//console.log(arg)
+						code.push(this.vars[(arg as IdentifierNode).name][0].toString())
+						continue;
+					}
+					if (arg.type != 'Literal')
+						throw `can only use literals or identifiers in __asm__`;
+					code.push((arg as LiteralNode).value)
+				}
+				return this.append(code.join(''))
+			}
+			this.str_instructions.push(`mov a [_fn_${fncNode.identifier}]`)
 			this.instructions.push({
 				opcode: 'jmr',
 				args: [A]
@@ -313,9 +360,9 @@ export default class Compiler {
 		} else {
 			console.error(`!!! UNIMPLEMENTED NODE `, node.type, node)
 		}
-		this.instructions.forEach((_, i) => {
-			if (!this.depth[i] && i >= start)
-				this.depth[i] = depth
-		})
+		// this.instructions.forEach((_, i) => {
+		// 	if (!this.depth[i] && i >= start)
+		// 		this.depth[i] = depth
+		// })
 	}
 }

@@ -289,12 +289,12 @@ export default class AST {
     private finishCall(callee: ASTNode): ASTNode {
         this.expect(TokenType.LPAREN, "Expected '(' after function name");
         //TODO - arguments
-        // const args: ASTNode[] = [];
-        // if (this.peek().type !== TokenType.RPAREN) {
-        //     do {
-        //         args.push(this.parseAssignment());
-        //     } while (this.match(TokenType.COMMA));
-        // }
+        const args: ASTNode[] = [];
+        if (this.peek().type !== TokenType.RPAREN) {
+            do {
+                args.push(this.parseAssignment());
+            } while (this.match(TokenType.COMMA));
+        }
         this.expect(TokenType.RPAREN, "Expected ')' after arguments");
 
 
@@ -321,7 +321,7 @@ export default class AST {
         return {
             type: "FunctionCall",
             identifier: (callee as IdentifierNode).name,
-            // args,
+            args,
         } as FunctionCallNode;
     }
 

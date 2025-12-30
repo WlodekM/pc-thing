@@ -154,6 +154,7 @@ export class PC {
         23: 'jz',
         24: 'jmr',
         25: 'ret',
+        26: 'flg',
         
         31: 'end'
     }

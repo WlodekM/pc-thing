@@ -1,0 +1,5 @@
+{
+  "imports": {
+    "@crayon/crayon": "jsr:@crayon/crayon@^4.0.0-alpha.4"
+  }
+}

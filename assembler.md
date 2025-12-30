@@ -8,12 +8,12 @@ example:
 start:
     mov a 1   ; put 1 into the a register
     mov b 2   ; put 2 into the b register
-    add       ; add registers a and b and put it in c
+    add c a b ; add registers a and b and put it in c
     str c 0   ; store c at address 0
 
     ld a 0    ; load address 0 into a
     mov b 14  ; put 14 into the b register
-    mul
+    mul c a b
 ```
 
 # list of cool features that come with the assembler
@@ -26,7 +26,8 @@ example:
 ```asm
 start:
     mov a 1 ; change the 1 to a 0 to change result
-    cmp a 0
+    mov b 0
+    cmp a b
     jnz zero
     jmp one ; else, jump to one
 
@@ -45,7 +46,8 @@ example:
 ```asm
 .macro store(val, addr) \
     put a @val\
-    str a @addr
+    put b @addr\
+    str b a
 
 store 1 0
 store 2 1
@@ -61,7 +63,8 @@ example:
 .label one 1 ; one
 
 mov a one ; one -> reg A
-str a 0 ; reg A -> 0x0
+mov b 0
+str a b ; reg A -> 0x0
 ```
 
 ## using code
@@ -74,7 +77,8 @@ start:
     mov a -1 ; 65535
     str a 16 ; put our number into 16
     #using printer.a
-    jmr print_num ; print number at 16 (well not print but stringify)
+    mov d print_num
+    jmr d ; print number at 16 (well not print but stringify)
     mov a 1 ; syscall 1 - write
     mov b 1 ; fd 1 - stdout
     mov c 32 ; from address 32
@@ -97,6 +101,7 @@ end
 
 string:
 .str "is your refrigerator running?"
+.hex 0 ; catch it
 ```
 
 oh and btw, if you're using a label to keep track of their location (actually, what else would you use), reference them by doing `[NAME]` instead of `NAME` because due to some jank with how the emulator/assembler/whatever works i needed to offset the location for `NAME` references for jump instructions to work

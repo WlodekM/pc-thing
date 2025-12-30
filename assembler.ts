@@ -30,6 +30,7 @@ const object: ObjectFile = {
     offset: 2**16 / 2
 }
 
+let aa_enabled = true;
 const advAliases: Record<string, string> = {
     'mov,reg,addr': dedent`\
         mov d @1
@@ -43,10 +44,22 @@ const advAliases: Record<string, string> = {
     'ld,reg,addr':  dedent`\
         mov d @1
         ld @0 d`,
+    'str,reg,val': dedent`\
+        mov d @1
+        str d @0`,
+    'ld,reg,val':  dedent`\
+        mov d @1
+        ld @0 d`,
     'add,': `add c a b`,
     'sub,': `sub c a b`,
     'mul,': `mul c a b`,
     'div,': `div c a b`,
+	'jmp,addr': dedent`\
+		mov d @0
+		jmp d`,
+	'jmp,val': dedent`\
+		mov d @0
+		jmp d`,
 }
 
 function processCode(rcode: string, offset: number = 0): (string | number)[] {
@@ -79,15 +92,18 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         }
         const sel = el.split(' ');
         li++;
-        if (sel[0] == '.macro') {
+        if (sel[0] == '.macro' || sel[0] == '.amacro') {
+        	const t = sel[0]
             sel.shift();
             let tx = sel.join(' ');
             const pattern = /([A-z\-_0-9]+)\((.*?)\)\s*/g
             const match = [...tx.matchAll(pattern)][0]
             tx = tx.replace(pattern, '').replaceAll('\\n', '\n');
             if (!match) throw 'knives at you'
-            const args = (match[2] ?? '').split(/,\s*/g)
-            macros[match[1]] = (args_: string[]) => {
+            const args = (match[2] ?? '').split(/,\s*/g);
+            (t == '.macro' ?
+            	macros :
+            	advAliases)[match[1]] = (args_: string[]) => {
                 let s = tx;
                 let i = 0
                 for (const a of args_) {
@@ -111,11 +127,16 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             continue;
         }
         const sel = el.split(' ');
+        //console.log(li, sel, i)
         li++;
         if (el.endsWith(":")) {
             console.log(sel[0], i)
             labels[sel[0].replace(/:$/g,'')] = '$'+i;
             labels[`[${sel[0].replace(/:$/g,'')}]`] = `[${i}]`;
+            continue;
+        }
+        if (sel[0] == '.aa') {
+            aa_enabled = !!+sel[1];
             continue;
         }
         if (sel[0] == '.label') {
@@ -130,6 +151,9 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             continue;
         }
         if (sel[0] == '.macro') {
+            continue;
+        }
+        if (sel[0] == '.amacro') {
             continue;
         }
         if (sel[0] == '.offset') {
@@ -172,6 +196,9 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             continue;
         }
         if (el.endsWith(":")) {
+            continue;
+        }
+        if (sel[0] == '.aa') {
             continue;
         }
         if (sel[0] == '.label') {
@@ -219,7 +246,8 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             if (a.match(/^\$[0-9A-Fa-f]+$/g)) return 'addr';
             return 'val';
         })
-        if (advAliases[`${cmd},${argtypes.join(',')}`]) {
+        if (advAliases[`${cmd},${argtypes.join(',')}`] && aa_enabled) {
+            //console.log(`${cmd},${argtypes.join(',')}`)
             el = advAliases[`${cmd},${argtypes.join(',')}`].replace(/@([0-9]+)/g, (_m, arg) => {
                 if (argtypes[+arg] == 'addr') {
                     return args[+arg].replace('$', '')

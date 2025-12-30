@@ -19,7 +19,7 @@ print_num:
         ; get num-(num%mult)
             ld a number
             ld b mult
-            mod
+            mod c a b
             swp c b
             sub
             str c tmp1
@@ -27,53 +27,53 @@ print_num:
         ; get num-(num%(mult*10))
             mov a 10
             ld b mult
-            mul
+            mul c a b
             swp c b
             ld a number
-            mod
+            mod c a b
             swp c b
-            sub
+            sub c a b
         
         ; subtract the thingies to get the current digit
         swp c b
         ld a tmp1
-        sub
+        sub c a b
         swp c a
         ld b mult
-        div
+        div c a b
         str c currnum
 
         ; add zero to currnum and store at out_pointer
         swp a c ; currnum -> A
         mov b zero
-        add
+        add c a b
         ld a out_pointer
-        srr c a ; store c to address at a (which is out_pointer)
+        str c a ; store c to address at a (which is out_pointer)
 
         ; continue loop
             ; increment out_pointer
             ld a out_pointer
             mov b 1
-            add
+            add c a b
             str c out_pointer
             ; increment mult
             ld a mult
             mov b 10
-            mul
+            mul c a b
             str c mult
         
             swp c b ; mult -> b
             ld a number ; get number
-            mod ; get mod, will be equal to number if reached end
-            cmr c a ; compare result of mod and number (which is still in a)
+            mod c a b ; get mod, will be equal to number if reached end
+            cmr c c a ; compare result of mod and number (which is still in a)
             jz loop_start ; jump if not equal
     ; escaped from loop; swapping around memory to flip the text
     ld a out_pointer
     mov b out_start
-    sub
+    sub c a b
     swp c a
     mov b 2
-    div
+    div c a b
     str c swap_counter
     cmp c 0
     jnz end_swap
@@ -81,21 +81,32 @@ print_num:
         ; ptr - counter
             ld b swap_counter
             ld a out_pointer
-            sub
+            sub c a b
             str c tmp1
         ; start + counter
             ld a swap_counter ; 1
             mov b 1
-            sub ; 1
+            sub c a b ; 1
             swp c b ; 1 -> b
             mov a out_start ; 32
-            add ; 32 + 1 = 33
+            add c a b ; 32 + 1 = 33
         swp c b
         ld a tmp1
-        swpm a b
+        push a
+        push b
+        mov d 0
+        add c d a
+        add d d b
+        ld a a
+        ld b b
+        str d a
+        str c b
+        ; swpm a b
+        pop b
+        pop a
         ld a swap_counter
         mov b 1
-        sub
+        sub c a b
         str c swap_counter
         cmp c 0
         jz start_swap
@@ -103,9 +114,9 @@ print_num:
     ; add \n\0
     ld b out_pointer
     mov a 10 ; \n
-    srr a b
+    str a b
     mov a 1
-    add
+    add c a b
     mov a 0 ; \0
-    srr a c
+    str a c
     ret

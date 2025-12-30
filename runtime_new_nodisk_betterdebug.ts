@@ -1,4 +1,5 @@
 import { PC } from "./pc.ts";
+import { crayon } from '@crayon/crayon';
 
 type instruction = {function: (this: PC, argv: number[]) => void, args: number}
 
@@ -48,7 +49,8 @@ for (const filename of dir) {
 
 runtime.addInstruction('end', {function: () => { }, args: 0})
 
-const iram = Deno.readFileSync("the_e_programming_language/prog.bin")
+const iram = Deno.readFileSync(Deno.args[0] == '-p' ?
+    Deno.args[1]! : "the_e_programming_language/prog.bin")
 
 runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<number[]>((result, value, index, array) => {
     if (index % 2 === 0) {
@@ -100,16 +102,16 @@ function inspect() {
     // console.log(` Y:  ${cpu.regY.bits.map(k=>+k).reverse().join('')} (0x${cpu.regY.num().toString(16)})`)
     // console.log(` SP: ${runtime.pc.returnStack.map(k=>+k).reverse().join('')} (0x${cpu.stackPointer.num().toString(16)})`)
     console.log(` PC: ${runtime.pc.programPointer.toString(2).split('').map(k=>+k).reverse().join('')} (0x${runtime.pc.programPointer.toString(16)}) [0x${(runtime.pc.programPointer * 2).toString(16)}]`)
-    // console.log(` S:  ${cpu.status.bits.map(k=>+k).reverse().join('')} (${
-    //     'CZIDB-VN'.split('')
-    //     .map((a, i) => {
-    //         if (a == '-') return a;
-    //         const bit = cpu.status.bit(i);
-    //         if (bit)
-    //             return crayon.green(a)
-    //         return crayon.red(a)
-    //     }).reverse().join('')
-    // })`)
+    console.log(` S:  ${runtime.pc.status.bits.map(k=>+k).reverse().join('')} (${
+        'CZIDB-VN'.split('')
+        .map((a, i) => {
+            if (a == '-') return a;
+            const bit = runtime.pc.status.bit(i);
+            if (bit)
+                return crayon.green(a)
+            return crayon.red(a)
+        }).reverse().join('')
+    })`)
 
 }
 
@@ -267,7 +269,7 @@ do {
         console.debug(runtime.pc.programPointer, definition, instruction, runtime.pc.mem[runtime.pc.programPointer+1])
         runtime.run([+definition[0], ...args])
         // runtime.pc.programPointer++
-        c++
+        // c++
     } catch (error) {
         console.error(error);
         break;

@@ -1,0 +1,6 @@
+label-a:
+	mov a 0
+label-a:
+	mov a 1
+uh:
+	jmp [label-a]

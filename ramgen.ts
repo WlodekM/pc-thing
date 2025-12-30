@@ -61,7 +61,7 @@ for (const element of code) {
             return Math.floor(+arg) & 0xFFFF
         }
         arg = arg.toLowerCase();
-        if (!pc.regNames.split('').includes(arg)) throw 'whar '+arg
+        if (!pc.regNames.split('').includes(arg)) throw 'unknown register '+arg
         return arg
     })
     const inst = Object.entries(pc.instructions).find(([_, b]) => b == command);

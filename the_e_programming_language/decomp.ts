@@ -79,7 +79,7 @@ while (i < bin.length) {
 		decomp += ` ${arg_string}`
 		i++;
 	}
-	decomp+=`    \t; ${start+0x8000}\t${start}`
+	decomp+=`    \t; ${start+0x8000}\t${(start+0x8000).toString(16)}\t${start}`
 	decomp+='\n'
 }
 
