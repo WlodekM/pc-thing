@@ -1,4 +1,5 @@
-import * as lib from "./lib.ts";
+// deno-lint-ignore-file no-this-alias
+import * as lib from "../lib.ts";
 export class BitField {
     bits: boolean[];
     flip(bit: number) {
@@ -50,27 +51,80 @@ export class Register<T=number> extends BitField {
     }
 }
 
-export interface Segment {
-	start: number,
-	end: number,
-	get_value?: (this: PC, addr: number) => number,
-	set_value?: (this: PC, addr: number, value: number) => void
+enum DeviceType {
+	// segment devices
+	mem_chip	= 0x01,
+	rom			= 0x02,
+	disk		= 0x03,
+
+	// interrupt devices
+	clock		= 0x81,
 }
 
-class MemorySegment implements Segment {
-	start: number
-	end: number
-	mem: Uint16Array
+export abstract class SegmentDefinition {
+	pc?: PC = undefined as unknown as PC;
+	abstract start: number;
+	abstract end: number;
+	get_value?: (addr: number) => number;
+	set_value?: (addr: number, value: number) => void;
+}
+export class Segment {
+	pc: PC;
+	start: number;
+	end: number;
+	get_value?: (addr: number) => number;
+	set_value?: (addr: number, value: number) => void;
+	constructor(pc: PC, defintion: SegmentDefinition) {
+		this.pc = pc;
+		this.start = defintion.start
+		this.end = defintion.end
+		this.get_value = defintion.get_value
+		this.set_value = defintion.set_value
+	}
+}
+
+abstract class Device {
+	abstract type: DeviceType
+	abstract name: string
+}
+
+export interface InterruptDevice extends Device {
+	interrupt: number
+	type: DeviceType
+}
+export interface SegmentDevice extends Device {
+	type: DeviceType
+	segments: SegmentDefinition[]
+}
+
+abstract class NamedSegmentDevice implements SegmentDevice {
+	_segments: Record<string, SegmentDefinition> = {}
+	abstract type: DeviceType;
+	abstract name: string;
+	get segments(): SegmentDefinition[] {
+		return Object.values(this._segments)
+	}
+}
+
+export class MemoryDevice extends NamedSegmentDevice {
+	start: number;
+	size: number;
+	mem: Uint16Array;
+	type = DeviceType.mem_chip;
+	name = 'mem'
 	constructor(start: number, size: number) {
+		super();
+		const device = this;
+		this._segments.mem =  {
+			start: start,
+			end: start + size,
+			get_value(addr: number) {
+				return device.mem[addr - device.start]
+			}
+		}
 		this.start = start;
-		this.end = start + size;
-		this.mem = new Uint16Array(16)
-	}
-	get_value(addr: number): number {
-		return this.mem[addr - this.start]
-	}
-	set_value(addr: number, value: number) {
-		this.mem[addr - this.start] = value
+		this.size = size;
+		this.mem = new Uint16Array(size)
 	}
 }
 
@@ -79,29 +133,24 @@ export class PC {
 	registers: Registers = new Array<number>(4).fill(0) as Registers
 	regNames: string = 'abcd'
 	halted: boolean = false
-	mem = new Array<number>(2**16).fill(0)
+	//mem = new Array<number>(2**16).fill(0)
 	stack_pointer: number = 0
 	stack_index: number = 0
-	segments: Record<string, Segment> = {
-		stack_pointer: {
-			start: 0x7000,
-			end: 0x7000,
-			get_value(this: PC) {
-				return this.stack_pointer
-			},
-			set_value(this: PC, _, v) {
-				this.stack_pointer = v
+	segments: Record<string, Segment> = {}
+	interrupt_devices: Record<string, InterruptDevice> = {}
+	devices: Record<string, SegmentDevice | InterruptDevice> = {}
+	add_device(device: SegmentDevice | InterruptDevice) {
+		const id = Object.keys(this.devices).reduce((p,c)=>p+ +(c.startsWith(device.name)),0)
+		this.devices[`${device.name}${id}`] = device;
+		if ((device as SegmentDevice).segments) {
+			let i = 0
+			for (const segment_definition of (device as SegmentDevice).segments) {
+				const segment = new Segment(this, segment_definition)
+				this.segments[`${device.name}${id}s${i}`] = segment
+				i++
 			}
-		},
-		stack_index: {
-			start: 0x7001,
-			end: 0x7001,
-			get_value(this: PC) {
-				return this.stack_index
-			},
-			// set_value(_, v) {
-			// 	this.stack_pointer = v
-			// }
+		} else if (device.interrupt) {
+			this.interrupt_devices[`${device.name}${id}i`] = device
 		}
 	}
 	find_segment(addr: number): Segment | undefined {
@@ -120,14 +169,13 @@ export class PC {
 		const segment = this.find_segment(addr);
 		if (segment)
 			return segment.get_value ? segment.get_value.call(this,addr) : 0;
-	    //TODO - memory mapping
-	    return this.mem[addr];
+	    return 0;
 	}
 	setMem(addr: number, data: number) {
 	   	const segment = this.find_segment(addr);
 	   	if (segment)
 	   		return segment.set_value ? segment.set_value.call(this,addr, data) : 0;
-	    this.mem[addr] = Math.floor(data) % 2**16
+	    //this.mem[addr] = Math.floor(data) % 2**16
 	}
     push(v: number) {
 		if (!this.stack_pointer) throw 'no stack pointer';
@@ -156,7 +204,7 @@ export class PC {
 	//	set overflow(value:boolean)		{this.status.setBit(6, value)}
 	//	set negative(value:boolean)		{this.status.setBit(7, value)}
     //!SECTION
-    flagZN(num: number) {
+    flagZN() {
         // this.negative = (num & 0x80) != 0;
         // this.zero = num == 0;
 		throw 'deprecated: PC.flagZN'
@@ -205,6 +253,9 @@ export class PC {
 		0x19: 'ret',
 		0x1a: 'rti',
 		0x1b: 'cpy',
+		//0x1c
+		//0x1d
+		//0x1e
         0x1f: 'end',
     }
 }

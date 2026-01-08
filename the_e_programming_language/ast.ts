@@ -271,7 +271,7 @@ export default class AST {
 
         while (this.peek().type === TokenType.BINOP) {
             const operator = this.advance().value;
-            const right = this.parseCall();
+            const right = this.parseCall(allowStuff);
             left = { type: "BinaryExpression", operator, left, right } as BinaryExpressionNode;
         }
         return left;
@@ -358,7 +358,7 @@ export default class AST {
             return expr;
         }
 
-        throw new Error(`Unexpected token: ${token.type}`);
+        throw new Error(`Unexpected token: ${token.type} in parseCall; allowOther = ${allowOther}`);
     }
 
 }

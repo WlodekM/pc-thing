@@ -175,7 +175,7 @@ export default class Compiler {
 					})
 					this.status.A = NaN
 					break;
-				
+
 				case '>':
 					this.instructions.push({
 						opcode: 'cmr',

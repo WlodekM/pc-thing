@@ -6,5 +6,5 @@ export default {
         this.registers[r] = Number(data) ?? 0
     },
     args: 2,
-    arg_types: 'rn'
+    arg_types: 'ri'
 }

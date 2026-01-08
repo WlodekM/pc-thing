@@ -1,0 +1,5 @@
+_start:
+	mov a 0x1000
+	mov b 0x21
+	str a b
+	end

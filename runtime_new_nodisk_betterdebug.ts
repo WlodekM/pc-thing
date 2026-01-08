@@ -37,20 +37,39 @@ runtime.pc.segments.stdout = {
 		process.stdout.write(new Uint8Array([v]))
 	}
 }
+const	disk = Deno.readFileSync('disk.bin');
+let		block = 0;
+runtime.pc.segments.disk_block = {
+	start: 0x6000,
+	end: 0x6000,
+	set_value(_, v) {
+		block = v
+	},
+	get_value() {return block} 
+}
+runtime.pc.segments.disk = {
+	start: 0x6001,
+	end: 0x6200,
+	get_value(addr) {
+		const offset = addr - 0x6001
+		return disk[block * 512 + offset]
+	}
+}
 
-runtime.pc.mem[0x7000] = 0x1FF
+runtime.pc.setMem(0x7000, 0x1FF)
+console.log(runtime.pc)
 
-const dir = Deno.readDirSync('instructions_new');
+const dir = Deno.readDirSync('instructions_newer');
 
 for (const filename of dir) {
     runtime.addInstruction(filename.name.replace(/\..*?$/g, ''),
-        (await import('./instructions_new/' + filename.name)).default)
+        (await import('./instructions_newer/' + filename.name)).default)
 }
 
 runtime.addInstruction('end', {function: () => { }, args: 0})
 
 const iram = Deno.readFileSync(Deno.args[0] == '-p' ?
-    Deno.args[1]! : "the_e_programming_language/prog.bin")
+    Deno.args[1]! : "bios.bin")
 
 runtime.pc.mem = runtime.pc.mem.toSpliced(65534 / 2 + 1, 0, ...[...iram].reduce<number[]>((result, value, index, array) => {
     if (index % 2 === 0) {
@@ -102,16 +121,16 @@ function inspect() {
     // console.log(` Y:  ${cpu.regY.bits.map(k=>+k).reverse().join('')} (0x${cpu.regY.num().toString(16)})`)
     // console.log(` SP: ${runtime.pc.returnStack.map(k=>+k).reverse().join('')} (0x${cpu.stackPointer.num().toString(16)})`)
     console.log(` PC: ${runtime.pc.programPointer.toString(2).split('').map(k=>+k).reverse().join('')} (0x${runtime.pc.programPointer.toString(16)}) [0x${(runtime.pc.programPointer * 2).toString(16)}]`)
-    console.log(` S:  ${runtime.pc.status.bits.map(k=>+k).reverse().join('')} (${
-        'CZIDB-VN'.split('')
-        .map((a, i) => {
-            if (a == '-') return a;
-            const bit = runtime.pc.status.bit(i);
-            if (bit)
-                return crayon.green(a)
-            return crayon.red(a)
-        }).reverse().join('')
-    })`)
+    // console.log(` S:  ${runtime.pc.status.bits.map(k=>+k).reverse().join('')} (${
+    //     'CZIDB-VN'.split('')
+    //     .map((a, i) => {
+    //         if (a == '-') return a;
+    //         const bit = runtime.pc.status.bit(i);
+    //         if (bit)
+    //             return crayon.green(a)
+    //         return crayon.red(a)
+    //     }).reverse().join('')
+    // })`)
 
 }
 

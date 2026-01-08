@@ -15,7 +15,7 @@ type Opcode =
 	'shl'  |
 	'shr'  |
 	'cmp'  |
-	'cmr'  |
+	'cmp'  |
 	'and'  |
 	'or'   |
 	'xor'  |
@@ -183,9 +183,41 @@ export default class Compiler {
 					this.status.A = NaN
 					break;
 
+				case '-':
+					this.instructions.push({
+						opcode: 'sub',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
+				case '*':
+					this.instructions.push({
+						opcode: 'mul',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
+				case '/':
+					this.instructions.push({
+						opcode: 'div',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
+				case '%':
+					this.instructions.push({
+						opcode: 'mod',
+						args: [A, A, B]
+					})
+					this.status.A = NaN
+					break;
+
 				case '!=':
 					this.instructions.push({
-						opcode: 'cmr',
+						opcode: 'cmp',
 						args: [A, A, B]
 					})
 					this.status.A = NaN
@@ -199,9 +231,9 @@ export default class Compiler {
 					this.status.A = NaN
 					break;
 
-				case '==':
+				case '=':
 					this.instructions.push({
-						opcode: 'cmr',
+						opcode: 'cmp',
 						args: [A, A, B]
 					})
 					this.status.A = NaN
@@ -215,7 +247,7 @@ export default class Compiler {
 				
 				case '>':
 					this.instructions.push({
-						opcode: 'cmr',
+						opcode: 'cmp',
 						args: [A, B, A]
 					})
 					this.status.A = NaN
@@ -229,7 +261,7 @@ export default class Compiler {
 				
 				case '<':
 					this.instructions.push({
-						opcode: 'cmr',
+						opcode: 'cmp',
 						args: [A, A, B]
 					})
 					this.status.A = NaN
@@ -242,7 +274,7 @@ export default class Compiler {
 					break;
 			
 				default:
-					throw `cannot handle binexp ${binExpNode.operator}`
+					throw `cannot handle binexp ${binExpNode.operator}; ${JSON.stringify(binExpNode)}`
 			}
 			this.push('A')
 		} else if ((node as WhileNode).type == 'While') {
@@ -254,9 +286,11 @@ export default class Compiler {
  			this.compile(whileNode.condition)
 			this.pop('A')
 			this.mov('B', 0)
-			this.append(`cmp a b`)
+			this.append(`cmp b a b`)
+			this.append(`mov c 2`)
+			this.append(`and b b c`)
 			this.append(`mov a [${label}_end]`)
-			this.append(`jz a`)
+			this.append(`jz a b`)
 			this.reset_status()
 			for (const node of whileNode.branch) {
 				this.compile(node, depth + 1)
@@ -273,15 +307,17 @@ export default class Compiler {
 			this.mov('B', 0)
 			this.instructions.push({
 				opcode: 'cmp',
-				args: [A, B]
+				args: [B, A, B]
 			})
+			this.append(`mov c 2`)
+			this.append(`and b b c`)
 			//this.mov('A', start)
 			this.str_instructions.push(`mov a [${label}]`)
 			this.status.a = NaN;
 			//const inst = this.str_instructions.length -1;
 			this.instructions.push({
 				opcode: 'jz',
-				args: [A]
+				args: [A, B]
 			})
 			this.reset_status()
 			for (const node of ifNode.thenBranch) {
