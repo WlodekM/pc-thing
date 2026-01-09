@@ -1,6 +1,7 @@
 import { PC, MemoryDevice } from "./pc.ts";
 import { Args } from 'args';
 import process from 'node:process'
+import cli from "./debugger.ts";
 const args = new Args();
 
 args //@ts-ignore:
@@ -9,11 +10,11 @@ args //@ts-ignore:
 //@ts-ignore:
 const flags = args.parse(process.argv)
 const iram = Deno.readFileSync(flags.b)
-console.log(flags)
+// console.log(flags)
 
-type instruction = {function: (this: PC, argv: number[]) => void, args: number}
+export type instruction = {function: (this: PC, argv: number[]) => void, args: number, arg_types: string}
 
-class Runtime {
+export class Runtime {
 	pc: PC
 	constructor(pc?: PC) {
 		if (pc)
@@ -26,8 +27,9 @@ class Runtime {
 
 const pc = new PC();
 const bios_rom = new MemoryDevice(flags.l, 0xfff);
-console.log(flags.l)
-bios_rom.mem.set(iram, 0)
+const iram16 = new Uint16Array(iram.buffer);
+console.log(iram16)
+bios_rom.mem.set(iram16, 0)
 pc.add_device(bios_rom);
 //TODO - actual memory map like in memory_map.md
 pc.add_device(new MemoryDevice(0, 0xffff));
@@ -40,4 +42,24 @@ for (const file of Deno.readDirSync(import.meta.dirname+'/instructions')) {
 		= (await import(import.meta.dirname+'/instructions/'+file.name)).default;
 }
 
-console.log(runtime)
+// console.log(runtime)
+
+let original_pointer: number;
+while (!runtime.pc.halted) {
+	const opcode = runtime.pc.getMem(runtime.pc.programPointer);
+	const instr_name = runtime.pc.instructions[opcode];
+	original_pointer = runtime.pc.programPointer;
+	runtime.pc.programPointer++;
+	if (!instr_name) {
+		console.warn('unknown instr', opcode, opcode.toString(16));
+		continue;
+	}
+	const instruction = runtime.instructions[instr_name]!;
+	const args: number[] = [];
+	for (let i = 0; i < instruction.args; i++) {
+		args.push(runtime.pc.getMem(runtime.pc.programPointer));
+		runtime.pc.programPointer++;
+	}
+	if (await cli(runtime, original_pointer, instruction, instr_name, args))
+		instruction.function.call(runtime.pc, args)
+}

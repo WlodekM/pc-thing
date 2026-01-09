@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-this-alias
-import * as lib from "../lib.ts";
+import * as lib from "./lib.ts";
 export class BitField {
     bits: boolean[];
     flip(bit: number) {
@@ -115,11 +115,14 @@ export class MemoryDevice extends NamedSegmentDevice {
 	constructor(start: number, size: number) {
 		super();
 		const device = this;
-		this._segments.mem =  {
+		this._segments.mem = {
 			start: start,
 			end: start + size,
 			get_value(addr: number) {
 				return device.mem[addr - device.start]
+			},
+			set_value(addr: number, value: number) {
+				device.mem[addr - device.start] = value
 			}
 		}
 		this.start = start;
@@ -149,8 +152,8 @@ export class PC {
 				this.segments[`${device.name}${id}s${i}`] = segment
 				i++
 			}
-		} else if (device.interrupt) {
-			this.interrupt_devices[`${device.name}${id}i`] = device
+		} else if ((device as InterruptDevice).interrupt) {
+			this.interrupt_devices[`${device.name}${id}i`] = device as InterruptDevice
 		}
 	}
 	find_segment(addr: number): Segment | undefined {
@@ -224,38 +227,38 @@ export class PC {
     returnFlag = 0;
     returnStack: number[] = []
     // the instruction set, in no particular order :3
-    instructions: Record<number, string> = {
-		0x00: 'halt',
-		0x01: 'mov',
-		0x02: 'str',
-		0x03: 'ld',
-		0x04: 'push',
-		0x05: 'pop',
-		0x06: 'add',
-		0x07: 'sub',
-		0x08: 'mul',
-		0x09: 'div',
-		0x0a: 'not',
-		0x0b: 'and',
-		0x0c: 'or',
-		0x0d: 'xor',
-		0x0e: 'mod',
-		0x0f: 'shr',
-		0x10: 'shl',
-		0x11: 'swp',
-		0x12: 'zr',
-		0x13: 'flg',
-		0x14: 'cmp',
-		0x15: 'int',
-		0x16: 'jmp',
-		0x17: 'jmr',
-		0x18: 'jz',
-		0x19: 'ret',
-		0x1a: 'rti',
-		0x1b: 'cpy',
-		//0x1c
-		//0x1d
-		//0x1e
-        0x1f: 'end',
-    }
+    instructions: (string|undefined)[] = [
+		/*0x00:*/	'halt',
+		/*0x01:*/	'mov',
+		/*0x02:*/	'str',
+		/*0x03:*/	'ld',
+		/*0x04:*/	'push',
+		/*0x05:*/	'pop',
+		/*0x06:*/	'add',
+		/*0x07:*/	'sub',
+		/*0x08:*/	'mul',
+		/*0x09:*/	'div',
+		/*0x0a:*/	'not',
+		/*0x0b:*/	'and',
+		/*0x0c:*/	'or',
+		/*0x0d:*/	'xor',
+		/*0x0e:*/	'mod',
+		/*0x0f:*/	'shr',
+		/*0x10:*/	'shl',
+		/*0x11:*/	'swp',
+		/*0x12:*/	'zr',
+		/*0x13:*/	'flg',
+		/*0x14:*/	'cmp',
+		/*0x15:*/	'int',
+		/*0x16:*/	'jmp',
+		/*0x17:*/	'jmr',
+		/*0x18:*/	'jz',
+		/*0x19:*/	'ret',
+		/*0x1a:*/	'rti',
+		/*0x1b:*/	'cpy',
+		/*0x1c:*/	undefined,
+		/*0x1d:*/	undefined,
+		/*0x1e:*/	undefined,
+        /*0x1f:*/	'end',
+	]
 }
