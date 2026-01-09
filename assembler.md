@@ -93,11 +93,11 @@ to insert data in your code (for example: a string) you can use the `.str` or `.
 dunno how to call them, anyways, example
 
 ```asm
-mov a 1 ; write
-mov b 1 ; stdout
-mov c [string]
-sys
-end
+    mov a 1 ; write
+    mov b 1 ; stdout
+    mov c [string]
+    sys
+    end
 
 string:
 .str "is your refrigerator running?"
