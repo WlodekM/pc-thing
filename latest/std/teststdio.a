@@ -1,0 +1,12 @@
+start:
+	mov a [main]
+	jmp a
+	mov a 3
+
+main:
+	mov a 10
+	push a
+	mov a [putnh]
+	jmr a
+	halt
+#using std/stdio.a

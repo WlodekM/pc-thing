@@ -1,0 +1,42 @@
+.label stdout 0x1000
+_start:
+	mov d stdout
+	jmr print
+	halt
+
+print:
+	push a
+	push b
+	push c
+	mov a 0
+	push a
+	.loop:
+		; pop the index
+			pop a
+			;or b a a ; copy a to b
+		; get the char
+			mov c [string]
+			add b a c
+			ld b b
+		; print the char
+			str d b
+		; increment the index and push it back
+			mov c 1
+			add a a c
+			push a
+		; loop back if not NULL
+			;zr b b
+			;xor b b 1
+			mov a [.loop]
+			jnz a b
+	.exit:
+		pop d
+		pop c
+		pop b
+		pop a
+	ret
+
+string:
+.str "meow meow meow"
+.hex a
+.hex 0

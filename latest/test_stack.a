@@ -1,0 +1,6 @@
+_start:
+	mov a 5
+	push a
+	mov a 15
+	pop a
+	halt

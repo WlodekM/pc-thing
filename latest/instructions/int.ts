@@ -1,16 +1,11 @@
 import { PC } from "../pc.ts";
-import push from "./push.ts";
+//import push from "./push.ts";
 
 export default {
-	function(this: PC) {
-		if (!this.getMem(0x7002)) return;
-		push.function.call(this,[100]);
-		push.function.call(this,[99]);
-		push.function.call(this,[98]);
-		push.function.call(this,[97]);
-		push.function.call(this,[this.programPointer])
-		this.programPointer = this.getMem(0x7002)
+	function(this: PC, [reg]: [number]) {
+		const r = this.lib.parseReg(reg);
+		this.interrupt(this.registers[r]);
 	},
-	args: 0,
-	arg_types: ''
+	args: 1,
+	arg_types: 'r'
 }

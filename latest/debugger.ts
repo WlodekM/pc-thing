@@ -29,15 +29,16 @@ let instBreakpoints: string[] = [];
 let breakpoints: number[] = []
 let skip = 0
 let skip_print = 0
+//let cont_print = false
 export default async function cli(runtime: Runtime, original_pointer: number, instruction: instruction, instr_name: string, args: number[]): Promise<boolean> {
 	if (instBreakpoints.includes(instr_name)) {
 		instBreakpoints = instBreakpoints.filter(k => k != instr_name)
-		skip = 0;
+		skip = 0;skip_print = 0;
 		console.log('hit instruction breakpoint on', runtime.pc.programPointer.toString(16))
 	}
 	if (breakpoints.includes(original_pointer)) {
 		breakpoints = breakpoints.filter(k => k != original_pointer)
-		skip = 0;
+		skip = 0;skip_print = 0;
 		console.log('hit breakpoint on', original_pointer.toString(16))
 	}
 	if (skip != 0) {
@@ -54,7 +55,7 @@ export default async function cli(runtime: Runtime, original_pointer: number, in
 			[arg_type] ?? (a=>a))(arg_value);
 		decomp += ` ${arg_string}`
 	}
-	console.log(`${runtime.pc.programPointer.toString(16).padStart(4, '0')}\t${decomp}`)
+	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${decomp}`)
 	if (skip_print != 0) {
 		skip_print--
 		return true
@@ -92,7 +93,7 @@ ${val.toString().padStart(3)})`)
 			}
 			skip = num;
 			console.log(`skipping ${num} cycles`)
-			break dbgl;
+			return true;
 		} else if (i[0] == 'K'.charCodeAt(0)) {
 			const num = +(new TextDecoder().decode(i.slice(1, 7)).replaceAll('\0', ''));
 			if (Number.isNaN(num)) {
@@ -101,7 +102,7 @@ ${val.toString().padStart(3)})`)
 			}
 			skip_print = num;
 			console.log(`skipping ${num} cycles with printing`)
-			break dbgl;
+			return true;
 		} else if (i[0] == 'r'.charCodeAt(0)) {
 			const num = i[2] ? parseInt(new TextDecoder().decode(i.slice(1, 7)).replace('\n', '').replaceAll('\0', ''), 16) : runtime.pc.programPointer;
 			console.log(`set breakpoint on`, num.toString(16))
@@ -111,8 +112,11 @@ ${val.toString().padStart(3)})`)
 			console.log(`b - break, exit
 i - inspect
 s - inspect stack
-c - continue
-k[NUM] - skip
+S - don't execute this instruction
+c - continue and not print
+C - continue and print
+k[NUM] - skip and not print
+K[NUM] - skip and print
 r[ADR] - breakpoint
 g[ADR] - goto, change PC
 I[INS] - breakpoint instruction
@@ -133,6 +137,9 @@ m[ADDR] - set breakpoint on accessing that address`);
 		} else if (i[0] == 'c'.charCodeAt(0)) {
 			skip = -1
 			console.log(`continuing execution`)
+		} else if (i[0] == 'C'.charCodeAt(0)) {
+			skip_print = -1
+			console.log(`continuing execution and printing`)
 		} else if (i[0] == ':'.charCodeAt(0)) {
 			const instr = new TextDecoder().decode(i.slice(1, 15)).replace('\n', '').replaceAll('\0', '')
 			const match = [...instr.matchAll(/^([a-fA-F0-9]{1,4})=([a-fA-F0-9]{1,2})$/g)];

@@ -1,0 +1,150 @@
+_start:
+	mov a [main]
+	jmr a
+	halt
+.label SERIAL 0x1000
+
+putcf:
+	push a
+	;push b
+	;push c
+	mov a 1
+	popi a a
+	mov b SERIAL
+	str b a
+	;pop c
+	;pop b
+	pop a
+	ret
+
+.macro putc(ch) push a\
+	push b\
+	mov a @ch\
+	mov b SERIAL\
+	str b a\
+	pop b\
+	pop a
+
+;.label zero 48
+; put number hex
+putnh:
+	push a
+	push b
+	push c
+	push d
+	mov a 4
+	popi a a ; number
+	push a
+	.maskloop:
+		; check
+			mov d [putn_mask]
+			ld b d
+			cmp a a b
+			mov c 0x80
+			and a a c
+			mov c [.escape]
+			jnz a c
+		; shift mask
+			mov c 4
+			shl b c
+			str d b
+		; increment digit
+			mov d [putn_digit]
+			ld c d
+			mov d 4
+			add c c d
+			mov d [putn_digit]
+			str d c
+		mov d [.maskloop]
+		jmp d
+	.escape:
+	.loop:
+		pop a
+		push a
+		; load mask
+			mov b [putn_mask]
+			ld b b
+			push b ; push it to shift it later
+		and b a b ; apply it to the number
+		; load digit
+			mov c [putn_digit]
+			ld c c
+			push c ; push it to decrement later
+		shr b c ; shift masked number by digit
+		; get digit ascii
+			mov c [putn_digits]
+			add b b c
+			ld b b
+		; print it out
+			mov c SERIAL
+			str c b
+
+		;;incrment
+		mov c 4
+		; digit
+			pop a
+			sub a a c
+			mov d [putn_digit]
+			str d a
+		; mask
+			pop b
+			shr b c
+			mov d [putn_mask]
+			str d b
+		mov d [.loop]
+		jnz d b
+	.escape:
+	;;
+	pop d ; pop number
+	pop d
+	pop c
+	pop b
+	pop a
+	ret
+
+putn_mask:
+	.hex f
+putn_digit:
+	.hex 0
+putn_digits:
+	.str "0123456789ABCDEF"
+
+
+; unsafe print
+print:
+	push a
+	push b
+	push c
+	push d
+	mov d SERIAL
+	mov a 0
+	push a
+	.loop:
+		; pop the index
+			pop a
+			;or b a a ; copy a to b
+		; get the char
+			;mov c [string]
+			popi c 4
+			add b a c
+			ld b b
+		; print the char
+			str d b
+		; increment the index and push it back
+			mov c 1
+			add a a c
+			push a
+		; loop back if not NULL
+			;zr b b
+			;xor b b 1
+			mov a [.loop]
+			jnz a b
+	.exit:
+		pop d ; pop index
+		pop d ; pop address
+		pop d
+		pop c
+		pop b
+		pop a
+	ret
+ 

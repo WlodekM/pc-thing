@@ -51,12 +51,14 @@ export class Register<T=number> extends BitField {
     }
 }
 
-enum DeviceType {
+export enum DeviceType {
 	// segment devices
 	mem_chip	= 0x01,
 	rom			= 0x02,
 	disk		= 0x03,
-
+	stack		= 0x04,
+	
+	other_segment = 0x80,
 	// interrupt devices
 	clock		= 0x81,
 }
@@ -83,7 +85,7 @@ export class Segment {
 	}
 }
 
-abstract class Device {
+export abstract class Device {
 	abstract type: DeviceType
 	abstract name: string
 }
@@ -97,7 +99,7 @@ export interface SegmentDevice extends Device {
 	segments: SegmentDefinition[]
 }
 
-abstract class NamedSegmentDevice implements SegmentDevice {
+export abstract class NamedSegmentDevice implements SegmentDevice {
 	_segments: Record<string, SegmentDefinition> = {}
 	abstract type: DeviceType;
 	abstract name: string;
@@ -142,6 +144,7 @@ export class PC {
 	segments: Record<string, Segment> = {}
 	interrupt_devices: Record<string, InterruptDevice> = {}
 	devices: Record<string, SegmentDevice | InterruptDevice> = {}
+	stack_device?: SegmentDevice;
 	add_device(device: SegmentDevice | InterruptDevice) {
 		const id = Object.keys(this.devices).reduce((p,c)=>p+ +(c.startsWith(device.name)),0)
 		this.devices[`${device.name}${id}`] = device;
@@ -152,9 +155,23 @@ export class PC {
 				this.segments[`${device.name}${id}s${i}`] = segment
 				i++
 			}
+			if (device.type == DeviceType.stack) {
+				this.stack_device = device
+			}
 		} else if ((device as InterruptDevice).interrupt) {
 			this.interrupt_devices[`${device.name}${id}i`] = device as InterruptDevice
 		}
+	}
+	interrupt(id: number) {
+		id %= 14; // technically means one could use negative values ;3c
+		const vector = this.getMem(0xb902+id);
+		if (vector == 0) return;
+		this.push(this.registers[3]);
+		this.push(this.registers[2]);
+		this.push(this.registers[1]);
+		this.push(this.registers[0]);
+		this.push(this.programPointer);
+		this.programPointer = vector
 	}
 	find_segment(addr: number): Segment | undefined {
 		for (const segment_name in this.segments) {
@@ -181,10 +198,14 @@ export class PC {
 	    //this.mem[addr] = Math.floor(data) % 2**16
 	}
     push(v: number) {
-		if (!this.stack_pointer) throw 'no stack pointer';
-		if (this.stack_index == 256) throw 'stack overflow';
-		this.setMem(this.stack_pointer + this.stack_index, v)
-		this.stack_index++;
+    	if (!this.stack_device) throw 'no stack device';
+		//if (!this.stack_pointer) throw 'no stack pointer';
+		//if (this.stack_index == 256) throw 'stack overflow';
+		this.stack_device.push(v)
+	}
+    pop(offset?: number): number {
+    	if (!this.stack_device) throw 'no stack device';
+		return this.stack_device.pop(offset)
 	}
     // status: Register<8>				= new Register(8);
     //!SECTION
@@ -252,11 +273,11 @@ export class PC {
 		/*0x15:*/	'int',
 		/*0x16:*/	'jmp',
 		/*0x17:*/	'jmr',
-		/*0x18:*/	'jz',
+		/*0x18:*/	'jnz',
 		/*0x19:*/	'ret',
 		/*0x1a:*/	'rti',
 		/*0x1b:*/	'cpy',
-		/*0x1c:*/	undefined,
+		/*0x1c:*/	'popi',
 		/*0x1d:*/	undefined,
 		/*0x1e:*/	undefined,
         /*0x1f:*/	'end',
