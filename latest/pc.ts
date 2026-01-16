@@ -61,6 +61,10 @@ export enum DeviceType {
 	other_segment = 0x80,
 	// interrupt devices
 	clock		= 0x81,
+
+	other_int	= 0xa0,
+	//both interrupt and segment
+	serial		= 0xa1
 }
 
 export abstract class SegmentDefinition {
@@ -88,6 +92,7 @@ export class Segment {
 export abstract class Device {
 	abstract type: DeviceType
 	abstract name: string
+	pc?: PC = undefined as unknown as PC;
 }
 
 export interface InterruptDevice extends Device {
@@ -147,6 +152,8 @@ export class PC {
 	stack_device?: SegmentDevice;
 	add_device(device: SegmentDevice | InterruptDevice) {
 		const id = Object.keys(this.devices).reduce((p,c)=>p+ +(c.startsWith(device.name)),0)
+		//console.log(device)
+		device.pc = this
 		this.devices[`${device.name}${id}`] = device;
 		if ((device as SegmentDevice).segments) {
 			let i = 0
@@ -162,16 +169,21 @@ export class PC {
 			this.interrupt_devices[`${device.name}${id}i`] = device as InterruptDevice
 		}
 	}
-	interrupt(id: number) {
+	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
 		id %= 14; // technically means one could use negative values ;3c
 		const vector = this.getMem(0xb902+id);
+		console.log(`int`, id, b, c, d, ':', vector)
 		if (vector == 0) return;
 		this.push(this.registers[3]);
 		this.push(this.registers[2]);
 		this.push(this.registers[1]);
 		this.push(this.registers[0]);
+		this.registers[0] = id;
+		this.registers[1] = b;
+		this.registers[2] = c;
+		this.registers[3] = d;
 		this.push(this.programPointer);
-		this.programPointer = vector
+		this.programPointer = vector;
 	}
 	find_segment(addr: number): Segment | undefined {
 		for (const segment_name in this.segments) {
@@ -237,9 +249,10 @@ export class PC {
 		if (set)
 			throw 'deprecated: PC.flagZCN(any, true)'
         const status = new BitField(8);
-        status.setBit(0, num > 0xFF || num < 0)
-        status.setBit(7, (num & 0x80) != 0);
+        status.setBit(0, num > 0xFFFF || num < 0);
         status.setBit(1, num == 0);
+        status.setBit(2, num > 0);
+        status.setBit(7, num < 0 || (num & 0x80 != 0));
         return status.num()
 
     }

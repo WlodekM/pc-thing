@@ -1,0 +1,22 @@
+.aa 0
+;: the code in memory
+.label mcode 0
+
+_start:
+	mov a 4
+	push a
+	cpy mcode [instr] 4
+	.loop:
+		pop a
+		str 1 a
+		jmr mcode
+		add a a 1
+		push a
+		;zr a a
+		jnz [.loop] a
+	.escape:
+	.endless:
+		jmp [.endless]
+instr:
+	mov 65535 0
+	ret

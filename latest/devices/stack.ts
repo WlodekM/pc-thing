@@ -12,9 +12,11 @@ export default class Stack extends NamedSegmentDevice {
 			start: si_loc,
 			end: si_loc,
 			get_value() {
+				console.log(device.stack)
 				return device.stack_index;
 			},
 			set_value(_: number, value: number) {
+				console.log('set si', value)
 				device.stack_index = value
 			}
 		}

@@ -1,7 +1,7 @@
 .label stdout 0x1000
 _start:
 	mov d stdout
-	jmr print
+	jmr [print]
 	halt
 
 print:
@@ -27,8 +27,8 @@ print:
 		; loop back if not NULL
 			;zr b b
 			;xor b b 1
-			mov a [.loop]
-			jnz a b
+			;mov a [.loop]
+			jnz [.loop] b
 	.exit:
 		pop d
 		pop c

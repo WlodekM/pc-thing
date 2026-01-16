@@ -1,0 +1,14 @@
+.aa 0
+start:
+	jmp [main]
+
+#using std/stdio.a
+
+main:
+	push [strin]
+	jmr [print]
+	halt
+
+strin:
+	.str "whats up faggots"
+	.hex 0

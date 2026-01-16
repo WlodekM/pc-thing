@@ -1,0 +1,29 @@
+.aa 0
+start:
+	..loop:
+		jmp [..loop]
+	halt
+
+#using std/stdio.a
+
+int:
+	push [strin]
+	jmr [print]
+	add a a 48
+	str 0x1000 a
+	str 0x1000 0x20
+	add a a 48
+	str 0x1000 a
+	str 0x1000 0x20
+	add a a 48
+	str 0x1000 a
+	str 0x1000 0x20
+	add a a 48
+	str 0x1000 a
+	str 0x1000 0x20
+	str 0x1000 10
+	rti
+
+strin:
+	.str "interrupt "
+	.hex 0

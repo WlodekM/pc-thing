@@ -60,7 +60,8 @@ let i = 0;
 
 while (i < bin.length) {
     const word: number = bin[i];
-	const instruction = pc.instructions[word];
+	const instruction_id = word & 0b11111
+	const instruction = pc.instructions[instruction_id];
 	const start = i;
 	i++;
 	if (!instruction) {
@@ -69,16 +70,37 @@ while (i < bin.length) {
 	}
 	decomp += instruction
 	const instruction_data = runtime.instructions[instruction]!;
+	let offset = 5;
+	let mask = 0b1110_0000;
+	let args = []
 	for (let j = 0; j < instruction_data.args; j++) {
+		const arg = (word & mask) >> offset;
+		if (arg < 0b100) {
+			decomp += ` ${'abcd'[arg]??`r${arg}`}`;
+			args.push('abcd'[arg]??`r${arg}`)
+			offset += 3;
+			mask <<= 3;
+			continue;
+		}
 		const arg_value = bin[i];
-		const arg_type = instruction_data.arg_types[j]!;
-		const arg_string = (({
-			r: b => String.fromCharCode(b)
-		} as Record<string,(uh:number)=>string>)
-			[arg_type] ?? (a=>a))(arg_value);
-		decomp += ` ${arg_string}`
+		//const arg_type = instruction_data.arg_types[j]!;
+		//const arg_string = (({
+		//	r: b => String.fromCharCode(b)
+		//} as Record<string,(uh:number)=>string>)
+		//	[arg_type] ?? (a=>a))(arg_value);
+		args.push(arg_value)
+		decomp += ` ${arg_value}`
+		offset += 3;
+		mask <<= 3;
 		i++;
 	}
+
+	poopoo:
+	if (['jmp','jmr','jnz'].includes(instruction)) {
+		if (typeof args[0] !== 'number') break poopoo;
+		
+	}
+
 	decomp+=`    \t; ${start+0x8000}\t${(start+0x8000).toString(16)}\t${start}`
 	decomp+='\n'
 }

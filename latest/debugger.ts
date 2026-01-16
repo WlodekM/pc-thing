@@ -15,13 +15,18 @@ function inspect(runtime: Runtime) {
 		}).join('\n'));
 
 	console.log('\nregisters:')
-	const [...letters] = 'ABCDEFG';
+	const [...letters] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	for (let i = 0; i < runtime.pc.registers.length; i++) {
 		const value = runtime.pc.registers[i];
-		const letter = letters[i]
-		console.log(` ${letter}:  ${value.toString(2).split('').map(k => +k).reverse().join('')} (0x${value.toString(16)})`)
+		const letter = letters[i] ?? i.toString(16)
+		if (typeof value != 'number') {
+			if (typeof value == 'undefined') continue;
+			console.log(` ${letter}:\t${value}`)
+			continue;
+		}
+		console.log(` ${letter}:\t${value.toString(2).split('').map(k => +k).reverse().join('')} (0x${value.toString(16)})`)
 	}
-	console.log(` PC: ${runtime.pc.programPointer.toString(2).split('').map(k => +k).reverse().join('')} (0x${runtime.pc.programPointer.toString(16)}) [0x${(runtime.pc.programPointer * 2).toString(16)}]`)
+	console.log(` PC:\t${runtime.pc.programPointer.toString(2).split('').map(k => +k).reverse().join('')} (0x${runtime.pc.programPointer.toString(16)}) [0x${(runtime.pc.programPointer * 2).toString(16)}]`)
 
 }
 
@@ -30,7 +35,7 @@ let breakpoints: number[] = []
 let skip = 0
 let skip_print = 0
 //let cont_print = false
-export default async function cli(runtime: Runtime, original_pointer: number, instruction: instruction, instr_name: string, args: number[]): Promise<boolean> {
+export default async function cli(runtime: Runtime, original_pointer: number, instruction: instruction, instr_name: string, args: number[], opcode: number): Promise<boolean> {
 	if (instBreakpoints.includes(instr_name)) {
 		instBreakpoints = instBreakpoints.filter(k => k != instr_name)
 		skip = 0;skip_print = 0;
@@ -55,7 +60,9 @@ export default async function cli(runtime: Runtime, original_pointer: number, in
 			[arg_type] ?? (a=>a))(arg_value);
 		decomp += ` ${arg_string}`
 	}
-	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${decomp}`)
+	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${instr_name}\t${args
+	.map(a => typeof a === 'number' ? 'abcd'[a] : a.v)
+	.join('\t')}`)
 	if (skip_print != 0) {
 		skip_print--
 		return true
@@ -155,7 +162,7 @@ m[ADDR] - set breakpoint on accessing that address`);
 			const num = parseInt(new TextDecoder().decode(i.slice(1, 7)).replace('\n', '').replaceAll('\0', ''), 16);
 			if (Number.isNaN(num))
 				continue;
-			console.log(`${num.toString(16).padStart(4, '0')}: ${runtime.pc.getMem(num).toString(16).padStart(2, '0')}`)
+			console.log(`${num.toString(16).padStart(4, '0')}: ${runtime.pc.getMem(num)?.toString(16)?.padStart(2, '0')}`)
 			continue;
 		}/* else if (i[0] == '\''.charCodeAt(0)) {
 				if (i[1] == '\n'.charCodeAt(0)) {

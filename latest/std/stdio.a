@@ -1,7 +1,4 @@
-_start:
-	mov a [main]
-	jmr a
-	halt
+halt
 .label SERIAL 0x1000
 
 putcf:
@@ -16,6 +13,8 @@ putcf:
 	;pop b
 	pop a
 	ret
+
+halt
 
 .macro putc(ch) push a\
 	push b\
@@ -35,14 +34,14 @@ putnh:
 	mov a 4
 	popi a a ; number
 	push a
-	.maskloop:
+	.s.maskloop:
 		; check
 			mov d [putn_mask]
 			ld b d
 			cmp a a b
 			mov c 0x80
 			and a a c
-			mov c [.escape]
+			mov c [.s.escape]
 			jnz a c
 		; shift mask
 			mov c 4
@@ -55,10 +54,10 @@ putnh:
 			add c c d
 			mov d [putn_digit]
 			str d c
-		mov d [.maskloop]
+		mov d [.s.maskloop]
 		jmp d
-	.escape:
-	.loop:
+	.s.escape:
+	.s.loop:
 		pop a
 		push a
 		; load mask
@@ -91,9 +90,9 @@ putnh:
 			shr b c
 			mov d [putn_mask]
 			str d b
-		mov d [.loop]
+		mov d [.s.loop]
 		jnz d b
-	.escape:
+	;.escape:
 	;;
 	pop d ; pop number
 	pop d
@@ -101,6 +100,8 @@ putnh:
 	pop b
 	pop a
 	ret
+
+halt
 
 putn_mask:
 	.hex f
@@ -119,7 +120,7 @@ print:
 	mov d SERIAL
 	mov a 0
 	push a
-	.loop:
+	.s..loop:
 		; pop the index
 			pop a
 			;or b a a ; copy a to b
@@ -137,7 +138,7 @@ print:
 		; loop back if not NULL
 			;zr b b
 			;xor b b 1
-			mov a [.loop]
+			mov a [.s..loop]
 			jnz a b
 	.exit:
 		pop d ; pop index
@@ -147,4 +148,5 @@ print:
 		pop b
 		pop a
 	ret
- 
+
+halt 
