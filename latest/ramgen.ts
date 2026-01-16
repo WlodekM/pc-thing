@@ -42,6 +42,7 @@ for (const element of code) {
         instructions.push(element)
         continue;
     }
+    let byte_length = 1
     const [command, ...args] = element.split(' ');
     switch (command) {
         case '.hex':
@@ -74,36 +75,94 @@ for (const element of code) {
 
 const instructionAddresses: number[] = [];
 
+function parse_args(raw_args, ia=true) {
+	return raw_args.map(i => {
+        if (typeof i !== 'string')
+        	return i;
+        const m = i.match(/^\[(.*)\]$/)
+        if (m) {
+            const ln = +m[1]
+            if (!ia) return 0;
+            if (!instructionAddresses[+ln]) throw 'cant find '+i
+            // console.log(i, instructionAddresses[+i.replace('$', '')])
+            return instructionAddresses[+ln]
+        }
+		if (!i.startsWith('$'))
+			return i;
+		if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
+		// console.log(i, instructionAddresses[+i.replace('$', '')])
+		return instructionAddresses[+i.replace('$', '')]
+    });
+}
+
 let addr = offset;
 for (const instr of instructions) {
     instructionAddresses.push(addr);
-    addr += typeof instr == 'number' ? instr : instr.length
+    if (typeof instr === 'number') {
+   		addr += instr;
+    	continue;
+    }
+	const [_,...raw_args] = instr;
+	const args = parse_args(raw_args, false);
+	addr += args.reduce((p,c) => {
+		if (typeof c == 'string') return p;
+		return p+1;
+	}, 1)
 }
 
+const registers = pc.regNames.split('');
 let i = 0
 for (const instr of instructions) {
-    // console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)
+    //console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)
     if (typeof instr == 'number') {
         // console.log(ram.length, instr, new Array<number>(instr).fill(0))
         ram.push(...new Array<number>(instr).fill(0))
         continue;
     }
-    const newInstr: number[] = instr.map<number>(i => {
-        if (typeof i !== 'string') return i;
-        const m = i.match(/^\[(.*)\]$/)
-        if (m) {
-            const ln = +m[1]
-            if (!instructionAddresses[+ln]) throw 'cant find '+i
-            // console.log(i, instructionAddresses[+i.replace('$', '')])
-            return instructionAddresses[+ln]
-        }
-        if (!i.startsWith('$')) return i.charCodeAt(0);
-        if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
-        // console.log(i, instructionAddresses[+i.replace('$', '')])
-        return instructionAddresses[+i.replace('$', '')]
-    })
+    const [instr_id, ...raw_args] = instr;
+    const args = parse_args(raw_args)
+    //0bNO333222_111IIIII 0bA8887776_66555444
+    let opcode = instr_id & 0b11111
+    opcode = opcode | 0b1000_0000_0000_0000;
+    let num_args = [];
+    let arg_shift = 5;
+    if (args.length > 3) throw 'more than 3 args not supported yet, sorry!';
+    //console.log(args.length)
+    for (let j = 0;  j < args.length; j++) {
+		const arg = args[j];
+		//console.log(j, arg, registers.includes(arg))
+		let argn: number;
+		if (typeof arg == 'string') {
+			if (!registers.includes(arg))
+				throw 'what how did you even get a string to this stage';
+			argn = registers.indexOf(arg)
+		} else {
+			argn = 0b100
+			num_args.push(arg)
+		}
+		//console.log(arg, argn, argn << arg_shift)
+		opcode |= argn << arg_shift
+    	arg_shift += 3
+    }
+    const bin = opcode.toString(2);
+    // console.log(`${bin.slice(0,-14)}-${bin.slice(-14,-11)}_${bin.slice(-11,-8)}_${bin.slice(-8,-5)}_${bin.substr(-5)}`, num_args, args)
+    //const newInstr: number[] = instr.map<number>(i => {
+    //    if (typeof i !== 'string') return i;
+    //    const m = i.match(/^\[(.*)\]$/)
+    //    if (m) {
+    //        const ln = +m[1]
+    //        if (!instructionAddresses[+ln]) throw 'cant find '+i
+    //        // console.log(i, instructionAddresses[+i.replace('$', '')])
+    //        return instructionAddresses[+ln]
+    //    }
+    //    if (!i.startsWith('$')) return i.charCodeAt(0);
+    //    if (!instructionAddresses[+i.replace('$', '')]) throw 'a '+i
+    //    // console.log(i, instructionAddresses[+i.replace('$', '')])
+    //    return instructionAddresses[+i.replace('$', '')]
+    //})
     // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
-    ram.push(...newInstr)
+    //ram.push(...newInstr)
+    ram.push(opcode, ...num_args)
     i++
 }
 
@@ -114,3 +173,5 @@ for (const element of object.data) {
 }
 
 Deno.writeFileSync(Deno.args[0] ?? 'iram.bin', Uint8Array.from(ram.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
+
+console.log(instructionAddresses)

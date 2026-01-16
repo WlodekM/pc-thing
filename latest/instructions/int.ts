@@ -3,8 +3,8 @@ import { PC } from "../pc.ts";
 
 export default {
 	function(this: PC, [reg]: [number]) {
-		const r = this.lib.parseReg(reg);
-		this.interrupt(this.registers[r]);
+		const r = this.lib.parseReg(reg, this);
+		this.interrupt(r);
 	},
 	args: 1,
 	arg_types: 'r'

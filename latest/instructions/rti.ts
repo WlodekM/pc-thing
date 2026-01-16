@@ -2,7 +2,7 @@ import { PC } from "../pc.ts";
 
 export default {
 	function(this: PC) {
-		if (!this.getMem(0x7002)) return;
+		//if (!this.getMem(0x7002)) return;
 		this.programPointer = this.pop();
 		this.registers[0] = this.pop();
 		this.registers[1] = this.pop();
