@@ -27,10 +27,8 @@ example:
 ```asm
 _start:
     mov a 1 ; change the 1 to a 0 to change result
-    mov b 0
-    cmp a b
-    jnz [zero]
-    jmp [one] ; else, jump to one
+    jnz [one] a; jump to one if number isnt zero
+    jmp [zero] ; else, jump to one
 
     zero:
         halt ; if zero, halt
@@ -46,8 +44,8 @@ macros allow you to shorten how you do basic tasks (such as storing data in memo
 example:
 ```asm
 .macro store(val, addr) \
-    put a @val\
-    put b @addr\
+    mov a @val\
+    mov b @addr\
     str b a
 
 store 1 0
@@ -63,9 +61,8 @@ example:
 ```asm
 .label one 1 ; one
 
-mov a one ; one -> reg A
-mov b 0
-str a b ; reg A -> 0x0
+mov a one ; 1 -> reg A
+str 0 a   ; reg A -> $0
 ```
 
 ## using code
@@ -77,13 +74,13 @@ example:
 start:
     mov a -1	; 65535
     str a 16	; put our number into 16
-    #using printer.a
     mov d [print_num]
-   	jmr d		; print number at 16 (well not print but stringify)
+   	jmr d  		; print number at 16 (well not print but stringify)
     mov a 1		; syscall 1 - write
     mov b 1		; fd 1 - stdout
     mov c 32	; from address 32
     sys ; syscall
+#using printer.a
 ```
 this will use printing code from `printer.a` to print the number 65535
 
@@ -94,31 +91,28 @@ to insert data in your code (for example: a string) you can use the `.str` or `.
 dunno how to call them, anyways, example
 
 ```asm
-    mov a 1 ; write
-    mov b 1 ; stdout
-    mov c [string]
-    sys
+    push [string]
+    jmr [print]
     end
+#using std/stdio.a
 
 string:
 .str "is your refrigerator running?"
 .hex 0 ; catch it
 ```
 
-oh and btw, if you're using a label to keep track of their location (actually, what else would you use), reference them by doing `[NAME]` instead of `NAME` because due to some jank with how the emulator/assembler/whatever works i needed to offset the location for `NAME` references for jump instructions to work
-
 here's an example of using them as variable storage
 
 ```asm
 init:
     mov a 1
-    str a [counter]
+    str a counter
 
 increment:
-    ld a [counter]
+    ld a counter
     mov b 1
     add
-    str c [counter]
+    str c counter
 
 counter:
 .hex 0
