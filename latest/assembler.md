@@ -75,7 +75,7 @@ start:
     mov a -1	; 65535
     str a 16	; put our number into 16
     mov d [print_num]
-   	jmr d  		; print number at 16 (well not print but stringify)
+    jmr d  		; print number at 16 (well not print but stringify)
     mov a 1		; syscall 1 - write
     mov b 1		; fd 1 - stdout
     mov c 32	; from address 32
@@ -106,13 +106,13 @@ here's an example of using them as variable storage
 ```asm
 init:
     mov a 1
-    str a counter
+    str counter a
 
 increment:
     ld a counter
     mov b 1
     add
-    str c counter
+    str counter c
 
 counter:
 .hex 0
