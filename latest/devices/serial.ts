@@ -19,10 +19,12 @@ export default class Serial extends NamedSegmentDevice {
 					process.stdin.destroy()
 					device.pc.halted = true
 					//process.exit(0)
+					return;
 				}
 				else return;
 				//device.key = 0x0;
-				device.pc.interrupt(10, key)
+				
+				device.pc.interrupt(10, key.charCodeAt(0))
 			})
 		}
 		this._segments.serial = {
