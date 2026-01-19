@@ -49,6 +49,7 @@ if (process.stdin.isTTY)
 	process.stdin.setRawMode(false);
 pc.add_device(new SerialDevice(0x1000, flags.i && !flags.d));
 pc.add_device(new MemoryDevice(0, 0x7fff));
+pc.add_device(new MemoryDevice(0xb900, 0x10));
 
 const runtime = new Runtime(pc)
 
@@ -65,6 +66,7 @@ runtime.instructions.end = runtime.instructions.halt
 function wait(ms:number) {return new Promise(r=>setTimeout(r,ms))}
 
 let original_pointer: number;
+let last = Date.now()
 while (!runtime.pc.halted) {
 	const opcode = runtime.pc.getMem(runtime.pc.programPointer);
 	const instr_id = opcode & 0b0000_0000_0001_1111;
@@ -96,6 +98,10 @@ while (!runtime.pc.halted) {
 	//console.log(runtime.pc.programPointer, instr_id, opcode?.toString(2), instr_id.toString(2), args)
 	if (!flags.d || await cli(runtime, original_pointer, instruction, instr_name, args, opcode)) {
 		instruction.function.call(runtime.pc, args);
-		await wait(5)
+		await wait(1)
+	}
+	if (Date.now() - last >= 500) {
+		runtime.pc.interrupt(11, Date.now() - last)
+		last = Date.now();
 	}
 }
