@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-this-alias
+// deno-lint-ignore-file no-this-alias prefer-const
 import * as lib from "./lib.ts";
 export class BitField {
     bits: boolean[];
@@ -53,18 +53,22 @@ export class Register<T=number> extends BitField {
 
 export enum DeviceType {
 	// segment devices
-	mem_chip	= 0x01,
-	rom			= 0x02,
-	disk		= 0x03,
-	stack		= 0x04,
+	mem_chip		= 0x01,
+	rom				= 0x02,
+	disk			= 0x03,
+	stack			= 0x04,
 	
-	other_segment = 0x80,
+	other_segment	= 0x7f,
 	// interrupt devices
-	clock		= 0x81,
+	clock			= 0x80,
 
-	other_int	= 0xa0,
+	other_int		= 0x9f,
 	//both interrupt and segment
-	serial		= 0xa1
+	serial			= 0xa1,
+
+	//device devices
+	stack_device	= 0x100,
+	disk_device		= 0x101,
 }
 
 export abstract class SegmentDefinition {
@@ -73,43 +77,56 @@ export abstract class SegmentDefinition {
 	abstract end: number;
 	get_value?: (addr: number) => number;
 	set_value?: (addr: number, value: number) => void;
+	//bootable?: boolean;
+	name: string;
+	abstract type?: DeviceType;
 }
 export class Segment {
 	pc: PC;
 	start: number;
 	end: number;
+	name: string;
+	//bootable: boolean = false;
 	get_value?: (addr: number) => number;
 	set_value?: (addr: number, value: number) => void;
-	constructor(pc: PC, defintion: SegmentDefinition) {
+	constructor(pc: PC, definition: SegmentDefinition) {
 		this.pc = pc;
-		this.start = defintion.start
-		this.end = defintion.end
-		this.get_value = defintion.get_value
-		this.set_value = defintion.set_value
+		this.start = definition.start;
+		this.end = definition.end;
+		this.get_value = definition.get_value;
+		this.set_value = definition.set_value;
+		this.bootable = definition.bootable ?? false;
+		this.name = definition.name;
 	}
 }
 
 export abstract class Device {
 	abstract type: DeviceType
 	abstract name: string
+	abstract bootable: boolean
 	pc?: PC = undefined as unknown as PC;
 }
 
 export interface InterruptDevice extends Device {
 	interrupt: number
 	type: DeviceType
+	bootable: boolean
 }
 export interface SegmentDevice extends Device {
 	type: DeviceType
 	segments: SegmentDefinition[]
+	bootable: boolean
 }
 
 export abstract class NamedSegmentDevice implements SegmentDevice {
 	_segments: Record<string, SegmentDefinition> = {}
 	abstract type: DeviceType;
 	abstract name: string;
+	abstract bootable: boolean;
+	abstract interrupt?: number;
 	get segments(): SegmentDefinition[] {
-		return Object.values(this._segments)
+		return Object.entries(this._segments)
+			.map(([name, seg]) => ({name,...seg}))
 	}
 }
 
@@ -118,6 +135,7 @@ export class MemoryDevice extends NamedSegmentDevice {
 	size: number;
 	mem: Uint16Array;
 	type = DeviceType.mem_chip;
+	bootable = false;
 	name = 'mem'
 	constructor(start: number, size: number) {
 		super();
@@ -138,6 +156,11 @@ export class MemoryDevice extends NamedSegmentDevice {
 	}
 }
 
+interface MemoryMode {
+	offset: number,
+	size: number
+}
+
 type Registers = [number, number, number, number]
 export class PC {
 	registers: Registers = new Array<number>(4).fill(0) as Registers
@@ -150,6 +173,63 @@ export class PC {
 	interrupt_devices: Record<string, InterruptDevice> = {}
 	devices: Record<string, SegmentDevice | InterruptDevice> = {}
 	stack_device?: SegmentDevice;
+	device_structs: Uint16Array[] = [];
+
+	default_mmode: MemoryMode = {
+		offset: 0,
+		size: 0xFFFF
+	}
+	memory_mode: MemoryMode = this.default_mmode
+
+	generate_device_struct(device: SegmentDevice | InterruptDevice): void {
+		//let structs: Uint16Array = [];
+		let device_struct = new Array(32).fill(0);
+		const id = Object.keys(this.devices).reduce((p,c)=>p+ +(c.startsWith(device.name)),0)
+		const te = new TextEncoder();
+		device_struct[0] = 0b1000 | ((+device.bootable) << 5)
+		device_struct[1] = this.device_structs.length;
+		let n = te.encode(`${device.name}${id}d`);
+		device_struct.splice(2, 14, ...new Array(14).fill(0).map((_,i)=>n[i]))
+		device_struct[15] = device.type
+		device_struct[16] = 0
+		//NOTE - fucky: reserve an index for the device to later overwrite
+		let idx = this.device_structs.length
+		this.device_structs.push(undefined as unknown as Uint16Array)
+		//var definitions = []
+		if (typeof (device as SegmentDevices).segments !== 'undefined') {
+			let i = 0;
+			for (const segment of (device as SegmentDevices).segments) {
+				let n = te.encode(`${device.name}${segment.name??i}s`);
+				let definition = [
+					(+!!segment.get_value) | (+!!segment.get_value << 1) | 4,
+					this.device_structs.length,
+					...new Array(28).fill(0).map((_,i)=>n[i]),
+					segment.type ?? device.type,
+					segment.start,
+					segment.end
+				]
+				device_struct[device_struct[16]++ +17] = this.device_structs.length;
+				this.device_structs.push(new Uint16Array(definition.flat()));
+				i++;
+			}
+		}
+		if ((device as InterruptDevice).interrupt) {
+			let dev = device as InterruptDevice;
+			let n = te.encode(`${device.name}${id}i`);
+			let definition = [
+				4,
+				this.device_structs.length,
+				...new Array(29).fill(0).map((_,i)=>n[i]),
+				dev.type,
+				dev.interrupt,
+			]
+			device_struct[device_struct[16]++ +17] = this.device_structs.length;
+			this.device_structs.push(new Uint16Array(definition.flat()));
+			//this.interrupt_devices[] = device as InterruptDevice
+		}
+		this.device_structs[idx] = new Uint16Array(device_struct.flat());
+	}
+
 	add_device(device: SegmentDevice | InterruptDevice) {
 		const id = Object.keys(this.devices).reduce((p,c)=>p+ +(c.startsWith(device.name)),0)
 		//console.log(device)
@@ -165,14 +245,16 @@ export class PC {
 			if (device.type == DeviceType.stack) {
 				this.stack_device = device
 			}
-		} else if ((device as InterruptDevice).interrupt) {
+		}
+		if ((device as InterruptDevice).interrupt) {
 			this.interrupt_devices[`${device.name}${id}i`] = device as InterruptDevice
 		}
+		this.generate_device_struct(device)
 	}
 	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
-		id %= 14; // technically means one could use negative values ;3c
+		id &= 0xFF;
 		const vector = this.getMem(0xb902+id);
-		console.log(`int`, id, b, c, d, ':', vector)
+		//console.log(`int`, id, b, c, d, ':', vector)
 		if (vector == 0) return;
 		this.push(this.registers[3]);
 		this.push(this.registers[2]);
@@ -184,6 +266,7 @@ export class PC {
 		this.registers[3] = d;
 		this.push(this.programPointer);
 		this.programPointer = vector;
+		this.memory_mode = this.default_mmode;
 	}
 	find_segment(addr: number): Segment | undefined {
 		for (const segment_name in this.segments) {
@@ -196,7 +279,8 @@ export class PC {
 		}
 	}
 	getMem(addr: number): number {
-	    if (addr < 0 || addr > 2**16)
+		addr += this.memory_mode.offset
+	    if (addr < 0 || addr > this.memory_mode.size)
 	        throw 'invalid address';
 		const segment = this.find_segment(addr);
 		if (segment)
