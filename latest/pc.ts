@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-this-alias prefer-const
+import Stack from "./devices/stack.ts";
 import * as lib from "./lib.ts";
 export class BitField {
     bits: boolean[];
@@ -77,8 +78,7 @@ export abstract class SegmentDefinition {
 	abstract end: number;
 	get_value?: (addr: number) => number;
 	set_value?: (addr: number, value: number) => void;
-	//bootable?: boolean;
-	name: string;
+	// bootable?: boolean;
 	abstract type?: DeviceType;
 }
 export class Segment {
@@ -89,13 +89,13 @@ export class Segment {
 	//bootable: boolean = false;
 	get_value?: (addr: number) => number;
 	set_value?: (addr: number, value: number) => void;
-	constructor(pc: PC, definition: SegmentDefinition) {
+	constructor(pc: PC, definition: SegmentDefinition&{name:string}) {
 		this.pc = pc;
 		this.start = definition.start;
 		this.end = definition.end;
 		this.get_value = definition.get_value;
 		this.set_value = definition.set_value;
-		this.bootable = definition.bootable ?? false;
+		// this.bootable = definition.bootable ?? false;
 		this.name = definition.name;
 	}
 }
@@ -111,10 +111,11 @@ export interface InterruptDevice extends Device {
 	interrupt: number
 	type: DeviceType
 	bootable: boolean
+	handle_interrupt: (pc: PC)=>void
 }
 export interface SegmentDevice extends Device {
 	type: DeviceType
-	segments: SegmentDefinition[]
+	segments: (SegmentDefinition&{name:string})[]
 	bootable: boolean
 }
 
@@ -124,7 +125,7 @@ export abstract class NamedSegmentDevice implements SegmentDevice {
 	abstract name: string;
 	abstract bootable: boolean;
 	abstract interrupt?: number;
-	get segments(): SegmentDefinition[] {
+	get segments(): (SegmentDefinition&{name:string})[] {
 		return Object.entries(this._segments)
 			.map(([name, seg]) => ({name,...seg}))
 	}
@@ -137,6 +138,7 @@ export class MemoryDevice extends NamedSegmentDevice {
 	type = DeviceType.mem_chip;
 	bootable = false;
 	name = 'mem'
+	interrupt = undefined;
 	constructor(start: number, size: number) {
 		super();
 		const device = this;
@@ -161,18 +163,18 @@ interface MemoryMode {
 	size: number
 }
 
-type Registers = [number, number, number, number]
+type Registers = [number, number, number, number, number]
 export class PC {
-	registers: Registers = new Array<number>(4).fill(0) as Registers
-	regNames: string = 'abcd'
+	registers: Registers = [0,0,0,0,0x2000] as Registers
+	regNames: string[] = ['a','b','c','d','sp']
 	halted: boolean = false
 	//mem = new Array<number>(2**16).fill(0)
 	stack_pointer: number = 0
 	stack_index: number = 0
 	segments: Record<string, Segment> = {}
-	interrupt_devices: Record<string, InterruptDevice> = {}
+	interrupt_devices: Record<number, InterruptDevice> = {}
 	devices: Record<string, SegmentDevice | InterruptDevice> = {}
-	stack_device?: SegmentDevice;
+	stack_device?: Stack;
 	device_structs: Uint16Array[] = [];
 
 	default_mmode: MemoryMode = {
@@ -196,9 +198,9 @@ export class PC {
 		let idx = this.device_structs.length
 		this.device_structs.push(undefined as unknown as Uint16Array)
 		//var definitions = []
-		if (typeof (device as SegmentDevices).segments !== 'undefined') {
+		if (typeof (device as SegmentDevice).segments !== 'undefined') {
 			let i = 0;
-			for (const segment of (device as SegmentDevices).segments) {
+			for (const segment of (device as SegmentDevice).segments) {
 				let n = te.encode(`${device.name}${segment.name??i}s`);
 				let definition = [
 					(+!!segment.get_value) | (+!!segment.get_value << 1) | 4,
@@ -243,15 +245,17 @@ export class PC {
 				i++
 			}
 			if (device.type == DeviceType.stack) {
-				this.stack_device = device
+				this.stack_device = device as Stack
 			}
 		}
 		if ((device as InterruptDevice).interrupt) {
-			this.interrupt_devices[`${device.name}${id}i`] = device as InterruptDevice
+			this.interrupt_devices[(device as InterruptDevice).interrupt] = device as InterruptDevice
 		}
 		this.generate_device_struct(device)
 	}
 	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
+		if (this.interrupt_devices[id])
+			return this.interrupt_devices[id].handle_interrupt(this)
 		id &= 0xFF;
 		const vector = this.getMem(0xb902+id);
 		//console.log(`int`, id, b, c, d, ':', vector)
@@ -294,12 +298,21 @@ export class PC {
 	    //this.mem[addr] = Math.floor(data) % 2**16
 	}
     push(v: number) {
+    	// const sp = this.registers[4];
+    	// const so = this.getMem(sp) + 1;
+    	// this.setMem(so+sp, v);
+    	// this.setMem(sp, so);
     	if (!this.stack_device) throw 'no stack device';
 		//if (!this.stack_pointer) throw 'no stack pointer';
 		//if (this.stack_index == 256) throw 'stack overflow';
 		this.stack_device.push(v)
 	}
-    pop(offset?: number): number {
+    pop(offset: number=0): number {
+       	// const sp = this.registers[4];
+       	// const so = this.getMem(sp) + 1;
+       	// return this.getMem(so+sp+offset);
+       	// if (!offset)
+       	// 	this.setMem(sp, so-1);
     	if (!this.stack_device) throw 'no stack device';
 		return this.stack_device.pop(offset)
 	}
@@ -336,7 +349,7 @@ export class PC {
         status.setBit(0, num > 0xFFFF || num < 0);
         status.setBit(1, num == 0);
         status.setBit(2, num > 0);
-        status.setBit(7, num < 0 || (num & 0x80 != 0));
+        status.setBit(7, num < 0 || ((num & 0x80) != 0));
         return status.num()
 
     }
