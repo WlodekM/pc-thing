@@ -1,0 +1,23 @@
+using "stdio.nva"
+entrypoint _start
+
+namespace program [
+	public _start [
+		mov a 5;
+		mov b 48;
+		.loop [
+			jnz (.escape) a
+			str 0x1000 a;
+			add b b 1;
+			sub a a 1;
+			jmp (.loop);
+		]
+		label .escape:
+		push (this_sucks)
+		jmr (print)
+	]
+
+	this_sucks {
+		"wow!! this sucks ass!!\n\0"
+	}
+]

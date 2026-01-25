@@ -4,6 +4,7 @@ import process from 'node:process'
 import cli from "./debugger.ts";
 import StackDevice from './devices/stack.ts'
 import SerialDevice from './devices/serial.ts'
+import GraphicsAdapter from "./devices/display/index.js";
 const args = new Args();
 
 export interface ImmediateArg {
@@ -50,6 +51,7 @@ if (process.stdin.isTTY)
 pc.add_device(new SerialDevice(0x1000, flags.i && !flags.d));
 pc.add_device(new MemoryDevice(0, 0x7fff));
 pc.add_device(new MemoryDevice(0xb900, 0x10));
+pc.add_device(new GraphicsAdapter(0xa000))
 
 const runtime = new Runtime(pc)
 
@@ -59,7 +61,7 @@ for (const file of Deno.readDirSync(import.meta.dirname+'/instructions')) {
 		= (await import(import.meta.dirname+'/instructions/'+file.name)).default;
 }
 
-// console.log(runtime)
+// console.log(runtime.pc.device_structs)
 runtime.pc.programPointer = 0x8000
 runtime.instructions.end = runtime.instructions.halt
 

@@ -62,7 +62,7 @@ for (const element of code) {
             return Math.floor(+arg) & 0xFFFF
         }
         arg = arg.toLowerCase();
-        if (!pc.regNames.split('').includes(arg)) throw 'unknown register '+arg
+        if (!pc.regNames.includes(arg)) throw 'unknown register '+arg
         return arg
     })
     const inst = Object.entries(pc.instructions).find(([_, b]) => b == command);
@@ -110,7 +110,7 @@ for (const instr of instructions) {
 	}, 1)
 }
 
-const registers = pc.regNames.split('');
+const registers = pc.regNames;
 let i = 0
 for (const instr of instructions) {
     //console.log(instr, Array.isArray(instr) ? instr[0].toString(16) : null)

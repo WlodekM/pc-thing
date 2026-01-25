@@ -1,5 +1,10 @@
 {
   "imports": {
     "@crayon/crayon": "jsr:@crayon/crayon@^4.0.0-alpha.4"
+  },
+  "lint": {
+  	"rules": {
+  		"exclude": ["no-this-alias", "prefer-const"]
+  	}
   }
 }

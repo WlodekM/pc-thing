@@ -1,0 +1,18 @@
+_start:
+
+_interrupt_handler:
+
+; process struct
+;	{
+;		int address
+;		int a
+;		int b
+;		int c
+;		int d
+;	}
+
+_data:
+	_process_count:
+		.hex 0
+	_processes:
+		.hex 0

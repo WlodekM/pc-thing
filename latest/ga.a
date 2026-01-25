@@ -1,21 +1,28 @@
 _start:
-    mov a 4
-    mov b 640
-    mov c 480
-    int 50
+    ;mov a 4
+    ;mov b 640
+    ;mov c 480
+    ;int 50
+    ;mov a 2
+    ;mov b 13
+    ;int 50
+    ;mov a 5
+    ;mov b 0
+    ;mov c 0
+    ;int 50
+    ;mov a 2
+    ;mov b 9
+    ;int 50
+    ;mov a 5
+    ;mov b 320
+    ;mov c 0
+    ;int 50
     mov a 2
     mov b 13
     int 50
-    mov a 5
-    mov b 0
-    mov c 0
-    int 50
-    mov a 2
-    mov b 9
-    int 50
-    mov a 5
-    mov b 320
-    mov c 0
+    mov a 6
+    mov b 0x21
+    mov c 1
     int 50
     mov a 0
     int 50

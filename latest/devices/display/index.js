@@ -391,6 +391,9 @@ export default class GraphicsAdapter extends NamedSegmentDevice {
 			case 5:
 				Rendering.fill(pc.registers[1], pc.registers[2], ...this.pos, this.color);
 				break;
+			case 6:
+				Rendering.char(String.fromCharCode(pc.registers[1]), ...this.pos, this.color, pc.registers[2]);
+				break;
 		
 			default:
 				break;

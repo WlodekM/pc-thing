@@ -1,0 +1,6 @@
+mov a 0xFFFF
+add a a 1
+mov a 0xFFFF
+mul a a 2
+mov a 0x0
+sub a a 1

@@ -1,9 +1,12 @@
 import { NamedSegmentDevice, DeviceType } from "../pc.ts";
 import readline from 'node:readline'
+import process from 'node:process'
 
 export default class Serial extends NamedSegmentDevice {
 	name = 'serial';
 	type = DeviceType.serial;
+	bootable = false;
+	interrupt = 10;
 	//key: null | number = null;
 	constructor(addr: number, inp = false) {
 		super();
@@ -12,7 +15,7 @@ export default class Serial extends NamedSegmentDevice {
 			readline.emitKeypressEvents(process.stdin);
 			if (process.stdin.isTTY)
 				process.stdin.setRawMode(true);
-			process.stdin.on('keypress', (key, s) => {
+			process.stdin.on('keypress', (key: string, s: any) => {
 				console.log(s.name)
 				if (key == undefined)
 				if (s.name == 'escape') {
@@ -28,6 +31,7 @@ export default class Serial extends NamedSegmentDevice {
 			})
 		}
 		this._segments.serial = {
+			name: 'serial',
 			start: addr,
 			end: addr,
 			set_value(_: number, value: number) {

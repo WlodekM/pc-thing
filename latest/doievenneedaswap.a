@@ -1,0 +1,6 @@
+_start:
+	mov b 0x21
+	mov a 48
+	mov b a
+	str 0x1000 b
+	halt

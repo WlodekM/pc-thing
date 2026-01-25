@@ -1,0 +1,25 @@
+_start:
+	push [welcome_text]
+	jmr [print]
+	.setup_interupts:
+		str 0xb902 [interrupt_handler]
+	.boot:
+		push [boot_text]
+		jmr [print]
+	
+	
+interrupt_handler:
+
+#using std/stdio.a
+
+_data:
+welcome_text:
+	.str "2616 bios v0.1"
+	.hex 10
+	.hex 0
+boot_text:
+	.str "booting..."
+	.hex 10
+	.hex 0
+
+

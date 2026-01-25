@@ -227,6 +227,15 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             i++;
             continue;
         }
+        if (sel[0] == '.num') {
+            object.data.push([
+                i,
+                [parseInt(sel[1])]
+            ])
+            result.push(1)
+            i++;
+            continue;
+        }
         if (sel[0] == '.str') {
             const str = [...el.matchAll(/"(.*?)(?<!\\)"/g)][0][1].replaceAll('\\"', '"')
             object.data.push([
@@ -242,7 +251,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         }
         const [cmd, ...args] = el.split(' ');
         const argtypes = args.map((a: string) => {
-            if (pc.regNames.split('').includes(a)) return 'reg';
+            if (pc.regNames.includes(a)) return 'reg';
             if (a.match(/^\$[0-9A-Fa-f]+$/g)) return 'addr';
             return 'val';
         })
