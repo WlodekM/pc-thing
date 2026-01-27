@@ -2,54 +2,54 @@
 import Stack from "./devices/stack.ts";
 import * as lib from "./lib.ts";
 export class BitField {
-    bits: boolean[];
-    flip(bit: number) {
-        this.bits[bit] = !this.bits[bit];
-    }
-    bit(bit: number) {
-        return this.bits[bit]
-    }
-    setBit(bit: number, value: boolean) {
-        this.bits[bit] = value;
-    }
-    set(value: number) {
-        for (let bit = 0; bit < this.bits.length; bit++) {
-            const mask: number = 1 << bit;
-            this.setBit(bit, (value & mask) != 0)
-        }
-    }
-    num(): number {
-        let number = 0;
-        for (let bit = 0; bit < this.bits.length; bit++) {
-            const mask: number = 1 << bit;
-            if (this.bits[bit])
-                number |= mask;
-        }
-        return number;
-    }
-    constructor (len: number) {
-        this.bits = new Array(len).fill(false);
-    }
+	bits: boolean[];
+	flip(bit: number) {
+		this.bits[bit] = !this.bits[bit];
+	}
+	bit(bit: number) {
+		return this.bits[bit]
+	}
+	setBit(bit: number, value: boolean) {
+		this.bits[bit] = value;
+	}
+	set(value: number) {
+		for (let bit = 0; bit < this.bits.length; bit++) {
+			const mask: number = 1 << bit;
+			this.setBit(bit, (value & mask) != 0)
+		}
+	}
+	num(): number {
+		let number = 0;
+		for (let bit = 0; bit < this.bits.length; bit++) {
+			const mask: number = 1 << bit;
+			if (this.bits[bit])
+				number |= mask;
+		}
+		return number;
+	}
+	constructor (len: number) {
+		this.bits = new Array(len).fill(false);
+	}
 }
 
 export class Register<T=number> extends BitField {
-    get value(): number {
-        return this.num()
-    }
-    set value(value: number) {
-        this.set(value)
-    }
-    increment(): number {
-        this.set(this.num() + 1);
-        return this.num()
-    }
-    decrement(): number {
-        this.set(this.num() - 1);
-        return this.num()
-    }
-    constructor(bits: number) {
-        super(bits);
-    }
+	get value(): number {
+		return this.num()
+	}
+	set value(value: number) {
+		this.set(value)
+	}
+	increment(): number {
+		this.set(this.num() + 1);
+		return this.num()
+	}
+	decrement(): number {
+		this.set(this.num() - 1);
+		return this.num()
+	}
+	constructor(bits: number) {
+		super(bits);
+	}
 }
 
 export enum DeviceType {
@@ -111,7 +111,7 @@ export interface InterruptDevice extends Device {
 	interrupt: number
 	type: DeviceType
 	bootable: boolean
-	handle_interrupt: (pc: PC)=>void
+	handle_interrupt?: (pc: PC)=>void
 }
 export interface SegmentDevice extends Device {
 	type: DeviceType
@@ -163,10 +163,10 @@ interface MemoryMode {
 	size: number
 }
 
-type Registers = [number, number, number, number, number]
+type Registers = [number, number, number, number, number, number]
 export class PC {
-	registers: Registers = [0,0,0,0,0x2000] as Registers
-	regNames: string[] = ['a','b','c','d','sp']
+	registers: Registers = [0,0,0,0,0x2000,0] as Registers
+	regNames: string[] = ['a','b','c','d','sp','pp']
 	halted: boolean = false
 	//mem = new Array<number>(2**16).fill(0)
 	stack_pointer: number = 0
@@ -253,12 +253,15 @@ export class PC {
 		}
 		this.generate_device_struct(device)
 	}
+	ih?: (id: number, b: number, c: number, d: number, vector: number) => void
 	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
-		if (this.interrupt_devices[id])
-			return this.interrupt_devices[id].handle_interrupt(this)
+		//console.log('hi', this.interrupt_devices[id].handle_interrupt)
+		if (this.interrupt_devices[id]?.handle_interrupt)
+			return this.interrupt_devices[id].handle_interrupt!(this)
 		id &= 0xFF;
 		const vector = this.getMem(0xb902+id);
-		//console.log(`int`, id, b, c, d, ':', vector)
+		console.log(`int`, id, b, c, d, ':', vector)
+		if (this.ih) this.ih(id,b,c,d, vector)
 		if (vector == 0) return;
 		this.push(this.registers[3]);
 		this.push(this.registers[2]);
@@ -284,41 +287,41 @@ export class PC {
 	}
 	getMem(addr: number): number {
 		addr += this.memory_mode.offset
-	    if (addr < 0 || addr > this.memory_mode.size)
-	        throw 'invalid address';
+		if (addr < 0 || addr > this.memory_mode.size)
+			throw 'invalid address';
 		const segment = this.find_segment(addr);
 		if (segment)
 			return segment.get_value ? segment.get_value.call(this,addr) : 0;
-	    return 0;
+		return 0;
 	}
 	setMem(addr: number, data: number) {
 	   	const segment = this.find_segment(addr);
 	   	if (segment)
 	   		return segment.set_value ? segment.set_value.call(this,addr, data) : 0;
-	    //this.mem[addr] = Math.floor(data) % 2**16
+		//this.mem[addr] = Math.floor(data) % 2**16
 	}
-    push(v: number) {
-    	// const sp = this.registers[4];
-    	// const so = this.getMem(sp) + 1;
-    	// this.setMem(so+sp, v);
-    	// this.setMem(sp, so);
-    	if (!this.stack_device) throw 'no stack device';
+	push(v: number) {
+		// const sp = this.registers[4];
+		// const so = this.getMem(sp) + 1;
+		// this.setMem(so+sp, v);
+		// this.setMem(sp, so);
+		if (!this.stack_device) throw 'no stack device';
 		//if (!this.stack_pointer) throw 'no stack pointer';
 		//if (this.stack_index == 256) throw 'stack overflow';
 		this.stack_device.push(v)
 	}
-    pop(offset: number=0): number {
-       	// const sp = this.registers[4];
-       	// const so = this.getMem(sp) + 1;
-       	// return this.getMem(so+sp+offset);
-       	// if (!offset)
-       	// 	this.setMem(sp, so-1);
-    	if (!this.stack_device) throw 'no stack device';
+	pop(offset: number=0): number {
+	   	// const sp = this.registers[4];
+	   	// const so = this.getMem(sp) + 1;
+	   	// return this.getMem(so+sp+offset);
+	   	// if (!offset)
+	   	// 	this.setMem(sp, so-1);
+		if (!this.stack_device) throw 'no stack device';
 		return this.stack_device.pop(offset)
 	}
-    // status: Register<8>				= new Register(8);
-    //!SECTION
-    //SECTION - status reg bits
+	// status: Register<8>				= new Register(8);
+	//!SECTION
+	//SECTION - status reg bits
 	//	get carry(): boolean			{return this.status.bit(0)}
 	//	get zero(): boolean				{return this.status.bit(1)}
 	//	get IRQBDisable(): boolean		{return this.status.bit(2)}
@@ -336,29 +339,34 @@ export class PC {
 	//	// ...1... //
 	//	set overflow(value:boolean)		{this.status.setBit(6, value)}
 	//	set negative(value:boolean)		{this.status.setBit(7, value)}
-    //!SECTION
-    flagZN() {
-        // this.negative = (num & 0x80) != 0;
-        // this.zero = num == 0;
+	//!SECTION
+	flagZN() {
+		// this.negative = (num & 0x80) != 0;
+		// this.zero = num == 0;
 		throw 'deprecated: PC.flagZN'
-    }
-    flagZCN(num: number, set: boolean = true): number {
+	}
+	flagZCN(num: number, set: boolean = true): number {
 		if (set)
 			throw 'deprecated: PC.flagZCN(any, true)'
-        const status = new BitField(8);
-        status.setBit(0, num > 0xFFFF || num < 0);
-        status.setBit(1, num == 0);
-        status.setBit(2, num > 0);
-        status.setBit(7, num < 0 || ((num & 0x80) != 0));
-        return status.num()
+		const status = new BitField(8);
+		status.setBit(0, num > 0xFFFF || num < 0);
+		status.setBit(1, num == 0);
+		status.setBit(2, num > 0);
+		status.setBit(7, num < 0 || ((num & 0x80) != 0));
+		return status.num()
 
-    }
-    programPointer: number = 0;
-    lib = lib
-    returnFlag = 0;
-    returnStack: number[] = []
-    // the instruction set, in no particular order :3
-    instructions: (string|undefined)[] = [
+	}
+	get programPointer(): number {
+		return this.registers[5]
+	}
+	set programPointer(v: number) {
+		this.registers[5] = v
+	}
+	lib = lib
+	returnFlag = 0;
+	returnStack: number[] = []
+	// the instruction set, in no particular order :3
+	instructions: (string|undefined)[] = [
 		/*0x00:*/	'halt',
 		/*0x01:*/	'mov',
 		/*0x02:*/	'str',
@@ -390,6 +398,6 @@ export class PC {
 		/*0x1c:*/	'popi',
 		/*0x1d:*/	undefined,
 		/*0x1e:*/	undefined,
-        /*0x1f:*/	'end',
+		/*0x1f:*/	'end',
 	]
 }
