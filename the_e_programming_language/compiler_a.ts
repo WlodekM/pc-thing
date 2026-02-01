@@ -3,34 +3,37 @@ import { AssignmentNode, ASTNode, BinaryExpressionNode, FunctionCallNode, Functi
 // const pc = new PC();
 
 type Opcode = 
-	'mov'  |
-	'swp'  |
-	'ld'   |
-	'str'  |
-	'add'  |
-	'sub'  |
-	'mul'  |
-	'div'  |
-	'mod'  |
-	'shl'  |
-	'shr'  |
-	'cmp'  |
-	'cmp'  |
-	'and'  |
-	'or'   |
-	'xor'  |
-	'not'  |
-	'push' |
-	'pop'  |
-	'halt' |
-	'sys'  |
-	'jmp'  |
-	'jnz'  |
-	'jz'   |
-	'jmr'  |
-	'ret'  |
-	'end';
-type Register = 'a' | 'b' | 'c' | 'd'
+	'halt'	|
+	'mov'	|
+	'str'	|
+	'ld'	|
+	'push'	|
+	'pop'	|
+	'add'	|
+	'sub'	|
+	'mul'	|
+	'div'	|
+	'not'	|
+	'and'	|
+	'or'	|
+	'xor'	|
+	'mod'	|
+	'shr'	|
+	'shl'	|
+	'swp'	|
+	'zr'	|
+	'flg'	|
+	'cmp'	|
+	'int'	|
+	'jmp'	|
+	'jmr'	|
+	'jnz'	|
+	'ret'	|
+	'rti'	|
+	'cpy'	|
+	'popi'	|
+	'stop'
+type Register = 'a' | 'b' | 'c' | 'd' | 'sp'
 
 interface Instruction {
 	opcode: Opcode,
@@ -99,11 +102,11 @@ export default class Compiler {
 			args: [reg.toLowerCase() as Register]
 		});
 	}
-	push(reg: 'A'|'B'|'C'|'D') {
-		this.stack.push(this.status[reg])
+	push(reg_or_value: 'A'|'B'|'C'|'D') {
+		this.stack.push(typeof reg_or_value == 'number' ? reg_or_value : this.status[reg_or_value])
 		this.instructions.push({
 			opcode: 'push',
-			args: [reg.toLowerCase() as Register]
+			args: [typeof reg_or_value == 'number' ? reg_or_value : reg_or_value.toLowerCase() as Register]
 		})
 	}
 	append(code: string) {
@@ -135,11 +138,11 @@ export default class Compiler {
 			}
 			if (varDeclNode.value) {
 				if (varDeclNode.value.type != 'Number') throw 'a';
-				this.mov('A', (varDeclNode.value as NumberNode).value)
-				this.mov('B', addr[0])
+				//this.mov('A', (varDeclNode.value as NumberNode).value)
+				//this.mov('B', addr[0])
 				this.instructions.push({
 					opcode: 'str',
-					args: [B, A]
+					args: [addr[0], (varDeclNode.value as NumberNode).value]
 				})
 			}
 		} else if ((node as FunctionDeclarationNode).type == 'FunctionDeclaration') {
@@ -217,30 +220,29 @@ export default class Compiler {
 
 				case '!=':
 					this.instructions.push({
-						opcode: 'cmp',
+						opcode: 'sub',
 						args: [A, A, B]
 					})
-					this.status.A = NaN
-					this.mov('B', 0b0000_0010)
-					this.append('not a a')
-					
 					this.instructions.push({
-						opcode: 'and',
-						args: [A, A, B]
+						opcode: 'zr',
+						args: [A, A]
 					})
+					this.instructions.push({
+						opcode: 'zr',
+						args: [A, A]
+					})
+					
 					this.status.A = NaN
 					break;
 
 				case '=':
 					this.instructions.push({
-						opcode: 'cmp',
+						opcode: 'sub',
 						args: [A, A, B]
 					})
-					this.status.A = NaN
-					this.mov('B', 0b0000_0010)
 					this.instructions.push({
-						opcode: 'and',
-						args: [A, A, B]
+						opcode: 'zr',
+						args: [A, A]
 					})
 					this.status.A = NaN
 					break;
@@ -290,7 +292,7 @@ export default class Compiler {
 			this.append(`mov c 2`)
 			this.append(`and b b c`)
 			this.append(`mov a [${label}_end]`)
-			this.append(`jz a b`)
+			this.append(`jnz a b`)
 			this.reset_status()
 			for (const node of whileNode.branch) {
 				this.compile(node, depth + 1)
@@ -304,21 +306,18 @@ export default class Compiler {
 			this.compile(ifNode.condition)
 			//this.reset_status()
 			this.pop('A')
-			this.mov('B', 0)
-			this.instructions.push({
-				opcode: 'cmp',
-				args: [B, A, B]
-			})
-			this.append(`mov c 2`)
-			this.append(`and b b c`)
-			//this.mov('A', start)
-			this.str_instructions.push(`mov a [${label}]`)
+			//this.mov('B', 0)
+			//this.instructions.push({
+			//	opcode: 'cmp',
+			//	args: [B, A, B]
+			//})
+			//this.append(`mov c 2`)
+			//this.append(`and b b c`)
+			this.append(`zr a a`)
 			this.status.a = NaN;
+			//this.mov('A', start)
 			//const inst = this.str_instructions.length -1;
-			this.instructions.push({
-				opcode: 'jz',
-				args: [A, B]
-			})
+			this.str_instructions.push(`jnz [${label}] a`);
 			this.reset_status()
 			for (const node of ifNode.thenBranch) {
 				this.compile(node, depth + 1)
@@ -388,11 +387,7 @@ export default class Compiler {
 				}
 				return this.append(code.join(''))
 			}
-			this.str_instructions.push(`mov a [_fn_${fncNode.identifier}]`)
-			this.instructions.push({
-				opcode: 'jmr',
-				args: [A]
-			})
+			this.str_instructions.push(`jmr [_fn_${fncNode.identifier}]`)
 		} else {
 			console.error(`!!! UNIMPLEMENTED NODE `, node.type, node)
 		}

@@ -1,7 +1,7 @@
 import Tokenizer from "./tokenizer.ts";
 import ASTGen from "./ast.ts";
 import Compiler from "./compiler_a.ts";
-import { PC } from "../pc.ts";
+import { PC } from "../latest/pc.ts";
 const dirname = import.meta.dirname+'/';
 const input = Deno.readTextFileSync(dirname+(Deno.args[0]??'test.e'))
 const pc = new PC()
