@@ -32,34 +32,34 @@ const object: ObjectFile = {
 
 let aa_enabled = true;
 const advAliases: Record<string, string> = {
-    'mov,reg,addr': dedent`\
-        mov d @1
-        ld @0 d`,
-    'mov,addr,reg': dedent`\
-        mov d @0
-        str d @1`,
-    'str,reg,addr': dedent`\
-        mov d @1
-        str d @0`,
-    'ld,reg,addr':  dedent`\
-        mov d @1
-        ld @0 d`,
-    'str,reg,val': dedent`\
-        mov d @1
-        str d @0`,
-    'ld,reg,val':  dedent`\
-        mov d @1
-        ld @0 d`,
+    // 'mov,reg,addr': dedent`\
+    //     mov d @1
+    //     ld @0 d`,
+    // 'mov,addr,reg': dedent`\
+    //     mov d @0
+    //     str d @1`,
+    // 'str,reg,addr': dedent`\
+    //     mov d @1
+    //     str d @0`,
+    // 'ld,reg,addr':  dedent`\
+    //     mov d @1
+    //     ld @0 d`,
+    // 'str,reg,val': dedent`\
+    //     mov d @1
+    //     str d @0`,
+    // 'ld,reg,val':  dedent`\
+    //     mov d @1
+    //     ld @0 d`,
     'add,': `add c a b`,
     'sub,': `sub c a b`,
     'mul,': `mul c a b`,
     'div,': `div c a b`,
-	'jmp,addr': dedent`\
-		mov d @0
-		jmp d`,
-	'jmp,val': dedent`\
-		mov d @0
-		jmp d`,
+	// 'jmp,addr': dedent`\
+	// 	mov d @0
+	// 	jmp d`,
+	// 'jmp,val': dedent`\
+	// 	mov d @0
+	// 	jmp d`,
 }
 
 function processCode(rcode: string, offset: number = 0): (string | number)[] {
@@ -273,7 +273,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
     return result
 }
 
-object.code = processCode(code+'\nend')
+object.code = processCode(code)
 
 // console.log(labels)
 
