@@ -60,12 +60,16 @@ let i = 0;
 
 while (i < bin.length) {
     const word: number = bin[i];
+	//if ((word & 0b1000_0000_0000_0000) == 0) {
+	//	decomp += `0x${word.toString(16)}\n`;
+	//	continue;
+	//}
 	const instruction_id = word & 0b11111
 	const instruction = pc.instructions[instruction_id];
 	const start = i;
 	i++;
 	if (!instruction) {
-		decomp += `unk 0x${word.toString(16)}\n`;
+		decomp += `0x${word.toString(16)}\n`;
 		continue;
 	}
 	decomp += instruction
@@ -76,7 +80,7 @@ while (i < bin.length) {
 	for (let j = 0; j < instruction_data.args; j++) {
 		const arg = (word & mask) >> offset;
 		if (arg < 0b100) {
-			decomp += ` ${'abcd'[arg]??`r${arg}`}`;
+			decomp += `\t${'abcd'[arg]??`r${arg}`}`;
 			args.push('abcd'[arg]??`r${arg}`)
 			offset += 3;
 			mask <<= 3;
@@ -89,7 +93,7 @@ while (i < bin.length) {
 		//} as Record<string,(uh:number)=>string>)
 		//	[arg_type] ?? (a=>a))(arg_value);
 		args.push(arg_value)
-		decomp += ` ${arg_value}`
+		decomp += `\t${arg_value}`
 		offset += 3;
 		mask <<= 3;
 		i++;
@@ -101,7 +105,7 @@ while (i < bin.length) {
 		
 	}
 
-	decomp+=`    \t; ${start+0x8000}\t${(start+0x8000).toString(16)}\t${start}`
+	decomp+=`${'\t'.repeat(3-args.length+1)}; ${start+0x8000}\t${(start+0x8000).toString(16)}\t${start}`
 	decomp+='\n'
 }
 
