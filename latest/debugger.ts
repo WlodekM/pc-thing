@@ -1,4 +1,4 @@
-import { type instruction, type Runtime } from "./runtime.ts";
+import { ImmediateArg, RegisterArg, type instruction, type Runtime } from "./runtime.ts";
 
 function inspect(runtime: Runtime) {
 	console.log('IO status:')
@@ -30,12 +30,28 @@ function inspect(runtime: Runtime) {
 
 }
 
+export function print_inst(original_pointer: number, instruction: instruction, instr_name: string, args: (ImmediateArg | RegisterArg)[]) {
+	let decomp: string = instr_name
+	for (let j = 0; j < instruction.args; j++) {
+		const arg_value = args[j];
+		const arg_type = instruction.arg_types[j]!;
+		const arg_string = (({
+			r: b => String.fromCharCode(b as RegisterArg)
+		} as Record<string,(uh:(ImmediateArg|RegisterArg))=>string>)
+			[arg_type] ?? (a=>a))(arg_value);
+		decomp += ` ${arg_string}`
+	}
+	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${instr_name}\t${args
+		.map(a => typeof a === 'number' ? 'abcd'[a] : a.v)
+		.join('\t')}`)
+}
+
 let instBreakpoints: string[] = [];
 let breakpoints: number[] = []
 let skip = 0
 let skip_print = 0
 //let cont_print = false
-export default async function cli(runtime: Runtime, original_pointer: number, instruction: instruction, instr_name: string, args: number[], opcode: number): Promise<boolean> {
+export default async function cli(runtime: Runtime, original_pointer: number, instruction: instruction, instr_name: string, args: (ImmediateArg | RegisterArg)[], _opcode: number): Promise<boolean> {
 	if (instBreakpoints.includes(instr_name)) {
 		instBreakpoints = instBreakpoints.filter(k => k != instr_name)
 		skip = 0;skip_print = 0;
@@ -50,24 +66,12 @@ export default async function cli(runtime: Runtime, original_pointer: number, in
 		skip--
 		return true
 	}
-	let decomp: string = instr_name
-	for (let j = 0; j < instruction.args; j++) {
-		const arg_value = args[j];
-		const arg_type = instruction.arg_types[j]!;
-		const arg_string = (({
-			r: b => String.fromCharCode(b)
-		} as Record<string,(uh:number)=>string>)
-			[arg_type] ?? (a=>a))(arg_value);
-		decomp += ` ${arg_string}`
-	}
-	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${instr_name}\t${args
-	.map(a => typeof a === 'number' ? 'abcd'[a] : a.v)
-	.join('\t')}`)
+	print_inst(original_pointer, instruction, instr_name, args);
 	if (skip_print != 0) {
 		skip_print--
 		return true
 	}
-	dbgl:
+	// dbgl:
 	while (true) {
 		const i = new Uint8Array(16);
 		Deno.stdout.write(Uint8Array.from(['.'.charCodeAt(0)]))

@@ -1,7 +1,7 @@
 import { PC, MemoryDevice } from "./pc.ts";
 import { Args } from 'args';
 import process from 'node:process'
-import cli from "./debugger.ts";
+import cli, { print_inst } from "./debugger.ts";
 import StackDevice from './devices/stack.ts'
 import SerialDevice from './devices/serial.ts'
 import GraphicsAdapter from "./devices/display/index.js";
@@ -16,16 +16,18 @@ export enum RegisterArg {
 }
 
 args //@ts-ignore:
-	.option('binary', 'the binary to be run by the emulator', 'iram.bin', ['b'])
-	.option('load-location', 'the address at which to load the binary', 0x8000, ['l'])
-	.option('debugger', 'enable the debugger', false, ['d'])
-	.option('input', 'enable interrupts on input', false, ['i']);
+	.option('binary', 'the binary to be run by the emulator', 'iram.bin')
+	.option('load-location', 'the address at which to load the binary', 0x8000)
+	.option('debugger', 'enable the debugger', false)
+	.option('input', 'enable interrupts on input', false)
+	.option('print-instruction', 'print instruction', false)
+	.option('graphics', 'okay, JAMER', false);
 //@ts-ignore:
 const flags = args.parse(process.argv)
 const iram = Deno.readFileSync(flags.b)
 // console.log(flags)
 
-export type instruction = {function: (this: PC, argv: number[]) => void, args: number, arg_types: string}
+export type instruction = {function: (this: PC, argv: (ImmediateArg | RegisterArg)[]) => void, args: number, arg_types: string}
 
 export class Runtime {
 	pc: PC
@@ -51,7 +53,7 @@ if (process.stdin.isTTY)
 pc.add_device(new SerialDevice(0x1000, flags.i && !flags.d));
 pc.add_device(new MemoryDevice(0, 0x7fff));
 pc.add_device(new MemoryDevice(0xb900, 0x10));
-pc.add_device(new GraphicsAdapter(0xa000))
+// pc.add_device(new GraphicsAdapter(0xa000))
 
 const runtime = new Runtime(pc)
 
@@ -65,10 +67,29 @@ for (const file of Deno.readDirSync(import.meta.dirname+'/instructions')) {
 runtime.pc.programPointer = 0x8000
 runtime.instructions.end = runtime.instructions.halt
 
-function wait(ms:number) {return new Promise(r=>setTimeout(r,ms))}
+let resolver:(...a:any[])=>void=()=>{};
+function wait(ms:number) {
+	return new Promise(r=>{
+		resolver=r
+		setTimeout(r,ms)
+	})
+}
 
 let original_pointer: number;
-let last = Date.now()
+let last = Date.now();
+let repeating = 0;
+const default_clock_delay = 1;
+let clock_delay = default_clock_delay;
+let last_pp = -1;
+pc.ih = (i,b,c,d,v) => {
+	if (i == 11) return;
+	//console.log(i,b,c,d,v)
+	if (!v) return;
+	repeating = 0;
+	clock_delay = default_clock_delay;
+	resolver()
+}
+console.log(Date.now())
 while (!runtime.pc.halted) {
 	const opcode = runtime.pc.getMem(runtime.pc.programPointer);
 	const instr_id = opcode & 0b0000_0000_0001_1111;
@@ -98,12 +119,26 @@ while (!runtime.pc.halted) {
 		o += 3
 	}
 	//console.log(runtime.pc.programPointer, instr_id, opcode?.toString(2), instr_id.toString(2), args)
+	if (flags.p && !flags.d)
+		print_inst(original_pointer, instruction, instr_name, args)
 	if (!flags.d || await cli(runtime, original_pointer, instruction, instr_name, args, opcode)) {
 		instruction.function.call(runtime.pc, args);
-		await wait(1)
+		//await wait(clock_delay)
 	}
-	if (Date.now() - last >= 500) {
-		runtime.pc.interrupt(11, Date.now() - last)
-		last = Date.now();
+	// if (Date.now() - last >= 500) {
+	// 	runtime.pc.interrupt(11, Date.now() - last)
+	// 	last = Date.now();
+	// }
+	if (last_pp == pc.programPointer) {
+		repeating++;
+		clock_delay = Math.min(500, default_clock_delay * repeating**2);
 	}
+	last_pp = pc.programPointer
 }
+//process.stdout.flush()
+console.log(Date.now())
+const ram = new Uint16Array(0xFFFF)
+for (let i = 0; i < 0xFFFF; i++) {
+	ram[i] = pc.getMem(i)
+}
+Deno.writeFileSync('ram.bin', new Uint8Array(ram.buffer))
