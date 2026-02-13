@@ -402,16 +402,14 @@ export default class GraphicsAdapter extends NamedSegmentDevice {
 	constructor(addr,) {
 		super();
 		const device = this;
-		this._segments.serial = {
-			name: 'serial',
+		this._segments.buff = {
+			name: 'buff',
 			start: addr,
-			end: addr,
-			set_value(_, value) {
-				Deno.stdout.write(new Uint8Array([value]))
+			end: addr+(width*height),
+			set_value(ad, value) {
+				const o =  ad - addr;
+				screen_buffer.set(colors[value], o)
 			},
-			get_value(_) {
-				return 0x0
-			}
 		}
 	}
 }
