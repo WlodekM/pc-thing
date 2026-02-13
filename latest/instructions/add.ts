@@ -5,7 +5,7 @@ export default {
         const r1 = this.lib.parseReg(reg1, this, true);
         const r2 = this.lib.parseReg(reg2, this);
         const r3 = this.lib.parseReg(reg3, this);
-        this.registers[r1] = r2 + r3
+        this.registers[r1] = this.lib.carry(r2 + r3, this)
     },
     args: 3,
     arg_types: 'rrr'
