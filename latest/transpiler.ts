@@ -6,6 +6,9 @@ const args = new Args();
 
 args //@ts-ignore:
 	.option('binary', 'the binary to be run by the emulator', 'iram.bin')
+	.option('accurate-interrupts', 'accurate (but inefficient) interrupts', false)
+	.option('print', 'print transpiled code', false)
+	.option('input', 'inpiut', false)
 
 const pc = new PC();
 type instruction = {function: (this: PC, argv: number[]) => void, args: number,  arg_types: string}
@@ -38,6 +41,21 @@ pc.add_device(new SerialDevice(0x1000, flags.i));
 pc.add_device(new MemoryDevice(0, 0x7fff));
 pc.add_device(new MemoryDevice(0xb900, 0x10));
 
+const interrupt_state: [boolean, number, number, number, number] = [false,0,0,0,0];
+
+function isint() { return interrupt_state[0] }
+
+function handle_interrupt() {
+	interrupt_state[0] = false;
+	pc.interrupt(
+		interrupt_state[1],
+		interrupt_state[2],
+		interrupt_state[3],
+		interrupt_state[4],
+		true
+	);
+	return pc.programPointer
+}
 
 pc.programPointer = 0x8000;
 
@@ -63,7 +81,7 @@ const dict: Record<number, [boolean, string]> = {
 	0x12:	/*zr*/  	[true,	`@0=+(@1==0);`],
 	0x13:	/*flg*/  	[true,	`@0=pc.flagZCN(@1,false);`],
 	0x14:	/*cmp*/  	[true,	`@0=pc.flagZCN(@1-@2,false);`],
-	0x15:	/*int*/  	[false,	'pc.interrupt(b,c,d);'],
+	0x15:	/*int*/  	[false,	'pc.interrupt(@0,b,c,d,true);'],
 	0x16:	/*jmp*/  	[false,	'return @0;'],
 	0x17:	/*jmr*/  	[false,	'pc.returnStack.push($!);return @0;'],
 	0x18:	/*jnz*/  	[true,	'if(@1!=0){return @0};'],
@@ -81,7 +99,7 @@ function parse_opcode(): [string, boolean] {
 	if (!(word & 0x8000)) throw `not opcode!!! ${word} (${word.toString(2).padStart(16,'0')}) @ ${start}`;
 	pc.programPointer++;
 	const opcode = word & 0b11111
-	//console.log(opcode, opcode.toString(16))
+	console.log(opcode, opcode.toString(16), pc.instructions[opcode])
 	const arg_mask = 0b1110_0000
 	const args = []
 	for (let i = 0; i < instruction_lengths[opcode]; i++) {
@@ -100,6 +118,7 @@ function parse_opcode(): [string, boolean] {
 		.replace(/@(\d)/g, (_, i) => args[+i].toString())
 		.replaceAll('$$', start.toString())
 		.replaceAll('$!', end.toString())
+		+ (flags['accurate-interrupts'] ? 'if(isint())return handle_interrupt();' : '')
 	]
 }
 
@@ -114,6 +133,8 @@ function parse_block(): string {
 		if (!r[0]) i += 10
 		i++
 	}
+	if (!flags['accurate-interrupts'])
+		code += 'if(isint())return handle_interrupt();';
 	code += `return ${pc.programPointer}}`
 	return code
 }
@@ -121,17 +142,32 @@ function parse_block(): string {
 //let a = 0, b = 0, c = 0, d = 0;
 console.log(Date.now())
 let C = 0
-const cache:Record<number,string> = {}
-while (pc.programPointer != -1) {
+const cache:Record<number,string> = {};
+
+pc.ih = function ih(vec, b, c, d) {
+	console.log('int', vec, b, c, d)
+	interrupt_state[0] = true;
+	interrupt_state[1] = vec;
+	interrupt_state[2] = b;
+	interrupt_state[3] = c;
+	interrupt_state[4] = d;
+	return true
+}
+
+setInterval(() => pc.interrupt(32,0,0,0,false), 1000)
+
+while (pc.programPointer != -1 && !pc.halted) {
 	//console.log(pc.programPointer, cache)
 	const start = pc.programPointer
 	const c = cache[start]??parse_block()
 	if (!cache[start])
 		cache[start]=c;
 	const r = eval(c)();
-	//console.debug(c.replaceAll(';','\n'), r)
+	if (flags.p)
+		console.debug(c.replaceAll(';','\n'), r)
 	pc.programPointer = r
 	if (r == -1) break;
-	//Deno.stdin.readSync(new Uint8Array(4))
+	await new Promise(r=>setTimeout(r,500))
+	//Deno.stdin.readSync(ne4w Uint8Array(4))
 }
 console.log(Date.now())

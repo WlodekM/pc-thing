@@ -18,7 +18,7 @@ function inspect(runtime: Runtime) {
 	const [...letters] = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 	for (let i = 0; i < runtime.pc.registers.length; i++) {
 		const value = runtime.pc.registers[i];
-		const letter = letters[i] ?? i.toString(16)
+		const letter = runtime.pc.regNames[i] ?? letters[i] ?? i.toString(16)
 		if (typeof value != 'number') {
 			if (typeof value == 'undefined') continue;
 			console.log(` ${letter}:\t${value}`)
