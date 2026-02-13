@@ -4,7 +4,6 @@ import process from 'node:process'
 import cli, { print_inst } from "./debugger.ts";
 import StackDevice from './devices/stack.ts'
 import SerialDevice from './devices/serial.ts'
-import GraphicsAdapter from "./devices/display/index.js";
 const args = new Args();
 
 export interface ImmediateArg {
@@ -25,7 +24,6 @@ args //@ts-ignore:
 //@ts-ignore:
 const flags = args.parse(process.argv)
 const iram = Deno.readFileSync(flags.b)
-// console.log(flags)
 
 export type instruction = {function: (this: PC, argv: (ImmediateArg | RegisterArg)[]) => void, args: number, arg_types: string}
 
@@ -53,7 +51,10 @@ if (process.stdin.isTTY)
 pc.add_device(new SerialDevice(0x1000, flags.i && !flags.d));
 pc.add_device(new MemoryDevice(0, 0x7fff));
 pc.add_device(new MemoryDevice(0xb900, 0x10));
-// pc.add_device(new GraphicsAdapter(0xa000))
+if (flags.g) {
+	const GraphicsAdapter = (await import("./devices/display/index.js")).default;
+	pc.add_device(new GraphicsAdapter(0xa000))
+}
 
 const runtime = new Runtime(pc)
 
@@ -89,8 +90,7 @@ pc.ih = (i,b,c,d,v) => {
 	clock_delay = default_clock_delay;
 	resolver()
 }
-console.log(Date.now())
-while (!runtime.pc.halted) {
+async function run_inst() {
 	const opcode = runtime.pc.getMem(runtime.pc.programPointer);
 	const instr_id = opcode & 0b0000_0000_0001_1111;
 	const instr_name = runtime.pc.instructions[instr_id];
@@ -98,7 +98,7 @@ while (!runtime.pc.halted) {
 	runtime.pc.programPointer++;
 	if (!instr_name) {
 		console.warn('unknown instr', instr_id, instr_id.toString(16), opcode.toString(2));
-		continue;
+		return;
 	}
 	const instruction = runtime.instructions[instr_name]!;
 	const args: (ImmediateArg | RegisterArg)[] = [];
@@ -108,8 +108,8 @@ while (!runtime.pc.halted) {
 	for (let i = 0; i < instruction.args; i++) {
 		const argtype = (opcode & (mask << o)) >> o;
 		//console.log(argtype, argtype.toString(2))
-		if (argtype < 0b100) {
-			args.push(argtype as RegisterArg);
+		if (argtype != 0b100) {
+			args.push(argtype - +(argtype > 0b100) as RegisterArg);
 		} else {
 			args.push({
 				v: runtime.pc.getMem(runtime.pc.programPointer)
@@ -123,20 +123,25 @@ while (!runtime.pc.halted) {
 		print_inst(original_pointer, instruction, instr_name, args)
 	if (!flags.d || await cli(runtime, original_pointer, instruction, instr_name, args, opcode)) {
 		instruction.function.call(runtime.pc, args);
-		//await wait(clock_delay)
 	}
-	// if (Date.now() - last >= 500) {
-	// 	runtime.pc.interrupt(11, Date.now() - last)
-	// 	last = Date.now();
-	// }
 	if (last_pp == pc.programPointer) {
 		repeating++;
 		clock_delay = Math.min(500, default_clock_delay * repeating**2);
 	}
 	last_pp = pc.programPointer
 }
+while (!runtime.pc.halted) {
+	await run_inst()
+	await run_inst()
+	await run_inst()
+	await wait(clock_delay)
+	if (Date.now() - last >= 100) {
+		runtime.pc.interrupt(11, Date.now() - last)
+		last = Date.now();
+	}
+}
 //process.stdout.flush()
-console.log(Date.now())
+await wait(100);
 const ram = new Uint16Array(0xFFFF)
 for (let i = 0; i < 0xFFFF; i++) {
 	ram[i] = pc.getMem(i)
