@@ -163,10 +163,24 @@ interface MemoryMode {
 	size: number
 }
 
-type Registers = [number, number, number, number, number, number]
+//type Registers = [number, number, number, number, number, number]
 export class PC {
-	registers: Registers = [0,0,0,0,0x2000,0] as Registers
-	regNames: string[] = ['a','b','c','d','sp','pp']
+	registers = Uint16Array.from([0,0,0,0,0x2000,0,0,0])
+	//TODO: flags register for carry and stuff
+	//registers = new Proxy(Uint16Array.from([0,0,0,0,0x2000,0]), {
+	//	get(target, prop, reveiver) {
+	//		//if (['string', 'number'].includes(typeof prop))
+	//		//	console.log({ target, prop, reveiver }, target[prop])
+	//		return target[prop]
+	//	},
+	//	set(target, prop, value) {
+	//		//if (value < )
+	//		//console.log({ target, prop, value })
+	//		target[prop] = value & 0xFFFF
+	//		return true
+	//	}
+	//})
+	regNames: string[] = ['a','b','c','d','sp','so','pp','fl']
 	halted: boolean = false
 	//mem = new Array<number>(2**16).fill(0)
 	stack_pointer: number = 0
@@ -245,7 +259,9 @@ export class PC {
 				i++
 			}
 			if (device.type == DeviceType.stack) {
-				this.stack_device = device as Stack
+				this.stack_device = device as Stack;
+				if (!device.segments[0]) throw 'what kind of fucked up stack device is that'
+				this.registers[4] = device.segments[0]!.start;
 			}
 		}
 		if ((device as InterruptDevice).interrupt) {
@@ -253,16 +269,16 @@ export class PC {
 		}
 		this.generate_device_struct(device)
 	}
-	ih?: (id: number, b: number, c: number, d: number, vector: number) => void
+	ih?: (id: number, b: number, c: number, d: number, vector: number, bypass_ih: boolean) => void
 	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
 		//console.log('hi', this.interrupt_devices[id].handle_interrupt)
 		if (this.interrupt_devices[id]?.handle_interrupt)
 			return this.interrupt_devices[id].handle_interrupt!(this)
 		id &= 0xFF;
 		const vector = this.getMem(0xb902+id);
-		console.log(`int`, id, b, c, d, ':', vector)
-		if (this.ih) this.ih(id,b,c,d, vector)
+		// console.log(`int`, id, b, c, d, ':', vector)
 		if (vector == 0) return;
+		if (this.ih && !bypass_ih) if (this.ih(id,b,c,d, vector)) return;
 		this.push(this.registers[3]);
 		this.push(this.registers[2]);
 		this.push(this.registers[1]);
@@ -301,28 +317,27 @@ export class PC {
 		//this.mem[addr] = Math.floor(data) % 2**16
 	}
 	push(v: number) {
-		// const sp = this.registers[4];
-		// const so = this.getMem(sp) + 1;
-		// this.setMem(so+sp, v);
-		// this.setMem(sp, so);
-		if (!this.stack_device) throw 'no stack device';
-		//if (!this.stack_pointer) throw 'no stack pointer';
-		//if (this.stack_index == 256) throw 'stack overflow';
-		this.stack_device.push(v)
+		const sp = this.registers[4];
+	   	const so = this.registers[5]++;
+		this.setMem(so+sp, v);
+		//if (!this.stack_device) throw 'no stack device';
+		////if (!this.stack_pointer) throw 'no stack pointer';
+		////if (this.stack_index == 256) throw 'stack overflow';
+		//this.stack_device.push(v)
 	}
 	pop(offset: number=0): number {
-	   	// const sp = this.registers[4];
-	   	// const so = this.getMem(sp) + 1;
-	   	// return this.getMem(so+sp+offset);
-	   	// if (!offset)
-	   	// 	this.setMem(sp, so-1);
-		if (!this.stack_device) throw 'no stack device';
-		return this.stack_device.pop(offset)
+	   	const sp = this.registers[4];
+	   	const so = this.registers[5]-1;
+	   	return this.getMem(so+sp-offset);
+	   	if (!offset)
+	   		this.registers[5] = so
+		//if (!this.stack_device) throw 'no stack device';
+		//return this.stack_device.pop(offset)
 	}
-	// status: Register<8>				= new Register(8);
+	status: Register<8>					= new Register(8);
 	//!SECTION
 	//SECTION - status reg bits
-	//	get carry(): boolean			{return this.status.bit(0)}
+		get carry(): boolean			{return this.status.bit(0)}
 	//	get zero(): boolean				{return this.status.bit(1)}
 	//	get IRQBDisable(): boolean		{return this.status.bit(2)}
 	//	get decimalMode(): boolean		{return this.status.bit(3)}
@@ -331,7 +346,7 @@ export class PC {
 	//	get overflow(): boolean			{return this.status.bit(6)}
 	//	get negative(): boolean			{return this.status.bit(7)}
 	//	
-	//	set carry(value:boolean)		{this.status.setBit(0, value)}
+		set carry(value:boolean)		{this.status.setBit(0, value)}
 	//	set zero(value:boolean)			{this.status.setBit(1, value)}
 	//	set IRQBDisable(value:boolean)	{this.status.setBit(2, value)}
 	//	set decimalMode(value:boolean)	{this.status.setBit(3, value)}
@@ -357,47 +372,60 @@ export class PC {
 
 	}
 	get programPointer(): number {
-		return this.registers[5]
+		return this.registers[6]
 	}
 	set programPointer(v: number) {
-		this.registers[5] = v
+		this.registers[6] = v
 	}
 	lib = lib
 	returnFlag = 0;
 	returnStack: number[] = []
 	// the instruction set, in no particular order :3
 	instructions: (string|undefined)[] = [
+		// halt
 		/*0x00:*/	'halt',
+		// mov
 		/*0x01:*/	'mov',
+		// memory stuff
 		/*0x02:*/	'str',
 		/*0x03:*/	'ld',
 		/*0x04:*/	'push',
 		/*0x05:*/	'pop',
+		// meth
 		/*0x06:*/	'add',
 		/*0x07:*/	'sub',
 		/*0x08:*/	'mul',
 		/*0x09:*/	'div',
+		// math  but bit
 		/*0x0a:*/	'not',
 		/*0x0b:*/	'and',
 		/*0x0c:*/	'or',
 		/*0x0d:*/	'xor',
+		// uhm, back to math
 		/*0x0e:*/	'mod',
+		// nvm, bit time
 		/*0x0f:*/	'shr',
 		/*0x10:*/	'shl',
+		// why do i even have this
 		/*0x11:*/	'swp',
+		// uh yeah
 		/*0x12:*/	'zr',
+		// why do i have this
 		/*0x13:*/	'flg',
+		// and this...
 		/*0x14:*/	'cmp',
+		// flow control!!
 		/*0x15:*/	'int',
 		/*0x16:*/	'jmp',
 		/*0x17:*/	'jmr',
 		/*0x18:*/	'jnz',
 		/*0x19:*/	'ret',
 		/*0x1a:*/	'rti',
+		// misceleneous extensions
 		/*0x1b:*/	'cpy',
 		/*0x1c:*/	'popi',
 		/*0x1d:*/	undefined,
 		/*0x1e:*/	undefined,
-		/*0x1f:*/	'end',
+		/*0x1f:*/	'stop',
 	]
 }
