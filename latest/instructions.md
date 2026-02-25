@@ -2,10 +2,45 @@
 
 the base instruction set (some instructions may be undocumented)
 
+| opcode  |   name	|
+| :------- | ------	|
+|	0x00    |	halt	|
+|	0x01    |	mov		|
+|	0x02    |	str		|
+|	0x03    |	ld		|
+|	0x04    |	push	|
+|	0x05    |	pop		|
+|	0x06    |	add		|
+|	0x07    |	sub		|
+|	0x08    |	mul		|
+|	0x09    |	div		|
+|	0x0a    |	not		|
+|	0x0b    |	and		|
+|	0x0c    |	or		|
+|	0x0d    |	xor		|
+|	0x0e    |	mod		|
+|	0x0f    |	shr		|
+|	0x10    |	shl		|
+|	0x11    |	swp		|
+|	0x12    |	zr		|
+|	0x13    |	jz		|
+|	0x14    |	undefined	|
+|	0x15    |	int		|
+|	0x16    |	jmp		|
+|	0x17    |	jmr		|
+|	0x18    |	jnz		|
+|	0x19    |	ret		|
+|	0x1a    |	rti		|
+|	0x1b    |	cpy		|
+|	0x1c    |	popi		|
+|	0x1d    |	undefined		|
+|	0x1e    |	undefined		|
+|	0x1f    |	stop		|
+
 table of contents:
  - [ADD](#add)
  - [AND](#and)
- - [CMP](#cmp)
+ - [CMP](#cmp) <!-- TODO: remove this -->
  - [CPY](#cpy)
  - [DIV](#div)
  - [HALT](#halt)
@@ -13,6 +48,7 @@ table of contents:
  - [JMP](#jmp)
  - [JMR](#jmr)
  - [JNZ](#jnz)
+ - [JZ](#jz) <!-- TODO: document this -->
  - [LD](#ld)
  - [MOD](#mod)
  - [MOV](#mov)
@@ -26,6 +62,7 @@ table of contents:
  - [RTI](#rti)
  - [SHL](#shl)
  - [SHR](#shr)
+ - [SMM](#smm) <!-- TODO: document this -->
  - [STR](#str)
  - [SUB](#sub)
  - [SWP](#swp)
@@ -247,6 +284,15 @@ pop [r1]
 pops an item from the stack and puts it in register `(r1)`
 
 ## POPI
+
+pop index(?)
+
+```
+popi [r1] (r2)
+```
+
+gets the `(r2)`th value of the stack and puts it in `[r1]`
+
 ## PUSH
 
 push to stack
@@ -258,6 +304,15 @@ push (r1)
 pushes `(r1)` to stack
 
 ## RET
+
+return
+
+```
+ret
+```
+
+pops a value from the return stack and jumps to it
+
 ## RTI
 
 return from interrupt
@@ -329,3 +384,12 @@ xor (r1) (r2) (r3)
 logical XOR's registers `(r2)` and `(r3)` and puts the output in `(r1)`
 
 ## ZR
+
+zero
+
+```
+zr [r1] (r2)
+```
+
+if `(r2)` is 0, `[r1]` is set to 1, otherwise -- 0
+
