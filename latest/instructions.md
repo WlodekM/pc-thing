@@ -23,8 +23,8 @@ the base instruction set (some instructions may be undocumented)
 |	0x10    |	[shl](#shl)		|	yes	|
 |	0x11    |	[swp](#swp)		|	yes	|
 |	0x12    |	[zr](#zr)		|	yes	|
-|	0x13    |	[jz](#jz)		|	no	|
-|	0x14    |	[smm](#smm)		|	no	|
+|	0x13    |	[jz](#jz)		|	yes	|
+|	0x14    |	[smm](#smm)		|	stub	|
 |	0x15    |	[int](#int)		|	yes	|
 |	0x16    |	[jmp](#jmp)		|	yes	|
 |	0x17    |	[jmr](#jmr)		|	yes	|
@@ -209,6 +209,17 @@ jnz (r1) (r2)
 ```
 
 jumps to address `(r1)` if `(r2)` isnt zero
+
+## JZ
+
+jump if zero
+
+usage:
+```
+jz (r1) (r2)
+```
+
+jumps to address `(r1)` if `(r2)` is zero
 
 ## LD
 
