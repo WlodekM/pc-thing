@@ -20,7 +20,8 @@ args //@ts-ignore:
 	.option('debugger', 'enable the debugger', false)
 	.option('input', 'enable interrupts on input', false)
 	.option('print-instruction', 'print instruction', false)
-	.option('graphics', 'okay, JAMER', false);
+	.option('graphics', 'okay, JAMER', false)
+	.option('clock', 'more like cock, amirite?   amirite?        im sorry', false);
 //@ts-ignore:
 const flags = args.parse(process.argv)
 const iram = Deno.readFileSync(flags.b)
@@ -45,7 +46,9 @@ const iram16 = new Uint16Array(iram.buffer);
 bios_rom.mem.set(iram16, 0)
 pc.add_device(bios_rom);
 //TODO - actual memory map like in memory_map.md
-pc.add_device(new StackDevice(0xb100, 0xb000));
+//pc.add_device(new StackDevice(0xb100, 0xb000));
+pc.add_device(new MemoryDevice(0xb100, 256));
+pc.registers[4] = 0xb100;
 if (process.stdin.isTTY)
 	process.stdin.setRawMode(false);
 pc.add_device(new SerialDevice(0x1000, flags.i && !flags.d));
@@ -91,7 +94,8 @@ pc.ih = (i,b,c,d,v) => {
 	resolver()
 }
 async function run_inst() {
-	const opcode = runtime.pc.getMem(runtime.pc.programPointer);
+	if (runtime.pc.interrupted || runtime.pc.halted) return;
+	const opcode = runtime.pc.getMem(runtime.pc.programPointer, true);
 	const instr_id = opcode & 0b0000_0000_0001_1111;
 	const instr_name = runtime.pc.instructions[instr_id];
 	original_pointer = runtime.pc.programPointer;
@@ -112,7 +116,7 @@ async function run_inst() {
 			args.push(argtype - +(argtype > 0b100) as RegisterArg);
 		} else {
 			args.push({
-				v: runtime.pc.getMem(runtime.pc.programPointer)
+				v: runtime.pc.getMem(runtime.pc.programPointer, true)
 			} as ImmediateArg);
 			runtime.pc.programPointer++;
 		}
@@ -131,10 +135,12 @@ async function run_inst() {
 	last_pp = pc.programPointer
 }
 while (!runtime.pc.halted) {
+	if (runtime.pc.interrupted) runtime.pc.interrupted = false;
 	await run_inst()
 	await run_inst()
 	await run_inst()
 	await wait(clock_delay)
+	if (flags.c)
 	if (Date.now() - last >= 100) {
 		runtime.pc.interrupt(11, Date.now() - last)
 		last = Date.now();
@@ -144,6 +150,6 @@ while (!runtime.pc.halted) {
 await wait(100);
 const ram = new Uint16Array(0xFFFF)
 for (let i = 0; i < 0xFFFF; i++) {
-	ram[i] = pc.getMem(i)
+	ram[i] = pc.getMem(i, true)
 }
 Deno.writeFileSync('ram.bin', new Uint8Array(ram.buffer))

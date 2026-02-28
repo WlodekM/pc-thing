@@ -196,6 +196,7 @@ export class PC {
 		size: 0xFFFF
 	}
 	memory_mode: MemoryMode = this.default_mmode
+	mm_lock: boolean = false;
 
 	generate_device_struct(device: SegmentDevice | InterruptDevice): void {
 		//let structs: Uint16Array = [];
@@ -269,6 +270,7 @@ export class PC {
 		}
 		this.generate_device_struct(device)
 	}
+	interrupted = false;
 	ih?: (id: number, b: number, c: number, d: number, vector: number, bypass_ih: boolean) => void
 	interrupt(id: number, b: number = 0, c: number = 0, d: number = 0) {
 		//console.log('hi', this.interrupt_devices[id].handle_interrupt)
@@ -276,9 +278,17 @@ export class PC {
 			return this.interrupt_devices[id].handle_interrupt!(this)
 		id &= 0xFF;
 		const vector = this.getMem(0xb902+id);
-		// console.log(`int`, id, b, c, d, ':', vector)
-		if (vector == 0) return;
-		if (this.ih && !bypass_ih) if (this.ih(id,b,c,d, vector)) return;
+		//console.log(`int`, id, b, c, d, ':', vector, (0xb902+id).toString(16))
+		if (vector == 0) return console.log('no vector');
+		//console.log('kajhjskhkjshjksjh')
+		// if (this.ih && !bypass_ih) {
+		// 	console.log('uh')
+		// 	const skip = this.ih(id,b,c,d, vector)
+		// 	console.log('skip', skip)
+		// 	if (skip) return;
+		// }
+		this.interrupted = true;
+		//console.log('uhm uh uh uhsauhoiuso')
 		this.push(this.registers[3]);
 		this.push(this.registers[2]);
 		this.push(this.registers[1]);
@@ -290,6 +300,7 @@ export class PC {
 		this.push(this.programPointer);
 		this.programPointer = vector;
 		this.memory_mode = this.default_mmode;
+		this.mm_lock = false;
 	}
 	find_segment(addr: number): Segment | undefined {
 		for (const segment_name in this.segments) {
@@ -301,8 +312,9 @@ export class PC {
 			return segment;
 		}
 	}
-	getMem(addr: number): number {
-		addr += this.memory_mode.offset
+	getMem(addr: number, absolute: boolean): number {
+		if (!absolute)
+			addr += this.memory_mode.offset;
 		if (addr < 0 || addr > this.memory_mode.size)
 			throw 'invalid address';
 		const segment = this.find_segment(addr);
@@ -319,6 +331,7 @@ export class PC {
 	push(v: number) {
 		const sp = this.registers[4];
 	   	const so = this.registers[5]++;
+		//console.log(so+sp, (so+sp).toString(16), '=', v)
 		this.setMem(so+sp, v);
 		//if (!this.stack_device) throw 'no stack device';
 		////if (!this.stack_pointer) throw 'no stack pointer';
@@ -380,7 +393,11 @@ export class PC {
 	lib = lib
 	returnFlag = 0;
 	returnStack: number[] = []
-	// the instruction set, in no particular order :3
+	// >"the instruction set, in no particular order :3"
+	// >look inside
+	// >order exists, and is explained
+	// >mfw
+	// [horse.jpeg]
 	instructions: (string|undefined)[] = [
 		// halt
 		/*0x00:*/	'halt',
@@ -410,10 +427,9 @@ export class PC {
 		/*0x11:*/	'swp',
 		// uh yeah
 		/*0x12:*/	'zr',
-		// why do i have this
-		/*0x13:*/	'flg',
-		// and this...
-		/*0x14:*/	'cmp',
+		// free space
+		/*0x13:*/	'jz', // rip cmp and flg, you will not be missed, i forgot how to use you anyway 
+		/*0x14:*/	'smm',
 		// flow control!!
 		/*0x15:*/	'int',
 		/*0x16:*/	'jmp',
