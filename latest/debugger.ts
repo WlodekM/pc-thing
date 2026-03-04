@@ -1,3 +1,4 @@
+import { PC } from "./pc.ts";
 import { ImmediateArg, RegisterArg, type instruction, type Runtime } from "./runtime.ts";
 
 function inspect(runtime: Runtime) {
@@ -42,7 +43,7 @@ export function print_inst(original_pointer: number, instruction: instruction, i
 		decomp += ` ${arg_string}`
 	}
 	console.log(`${original_pointer.toString(16).padStart(4, '0')}\t${instr_name}\t${args
-		.map(a => typeof a === 'number' ? 'abcd'[a] : a.v)
+		.map(a => typeof a === 'number' ? PC.regNames[a] : a.v)
 		.join('\t')}`)
 }
 

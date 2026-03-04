@@ -180,7 +180,8 @@ export class PC {
 	//		return true
 	//	}
 	//})
-	regNames: string[] = ['a','b','c','d','sp','so','pp','fl']
+	static regNames: string[] = ['a','b','c','d','sp','so','pp','fl']
+	regNames: string[] = PC.regNames;
 	halted: boolean = false
 	//mem = new Array<number>(2**16).fill(0)
 	stack_pointer: number = 0

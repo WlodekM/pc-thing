@@ -115,6 +115,7 @@ async function run_inst() {
 		if (argtype != 0b100) {
 			args.push(argtype - +(argtype > 0b100) as RegisterArg);
 		} else {
+			console.log(argtype, argtype.toString(2))
 			args.push({
 				v: runtime.pc.getMem(runtime.pc.programPointer, true)
 			} as ImmediateArg);

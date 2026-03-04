@@ -4,72 +4,40 @@ the base instruction set (some instructions may be undocumented)
 
 | opcode  |   name	|	documented	|
 | :------- | ------	| -------- |
-|	0x00    |	[halt](#halt)	|	yes	|
-|	0x01    |	[mov](#mov)		|	yes	|
-|	0x02    |	[str](#str)		|	yes	|
-|	0x03    |	[ld](#ld)		|	yes	|
-|	0x04    |	[push](#push)	|	yes	|
-|	0x05    |	[pop](#pop)		|	yes	|
-|	0x06    |	[add](#add)		|	yes	|
-|	0x07    |	[sub](#sub)		|	yes	|
-|	0x08    |	[mul](#mul)		|	yes	|
-|	0x09    |	[div](#div)		|	yes	|
-|	0x0a    |	[not](#not)		|	yes	|
-|	0x0b    |	[and](#and)		|	yes	|
-|	0x0c    |	[or](#or)		|	yes	|
-|	0x0d    |	[xor](#xor)		|	yes	|
-|	0x0e    |	[mod](#mod)		|	yes	|
-|	0x0f    |	[shr](#shr)		|	yes	|
-|	0x10    |	[shl](#shl)		|	yes	|
-|	0x11    |	[swp](#swp)		|	yes	|
-|	0x12    |	[zr](#zr)		|	yes	|
-|	0x13    |	[jz](#jz)		|	yes	|
-|	0x14    |	[smm](#smm)		|	stub	|
-|	0x15    |	[int](#int)		|	yes	|
-|	0x16    |	[jmp](#jmp)		|	yes	|
-|	0x17    |	[jmr](#jmr)		|	yes	|
-|	0x18    |	[jnz](#jnz)		|	yes	|
-|	0x19    |	[ret](#ret)		|	yes	|
-|	0x1a    |	[rti](#rti)		|	yes	|
-|	0x1b    |	[cpy](#cpy)		|	yes	|
-|	0x1c    |	[popi](#popi)	|	yes	|
-|	0x1d    |	undefined		|	-	|
-|	0x1e    |	undefined		|	-	|
-|	0x1f    |	undefined		|	-	|
+|	0x00	|	[halt](#halt)	|	yes	|
+|	0x01	|	[mov](#mov)		|	yes	|
+|	0x02	|	[str](#str)		|	yes	|
+|	0x03	|	[ld](#ld)		|	yes	|
+|	0x04	|	[push](#push)	|	yes	|
+|	0x05	|	[pop](#pop)		|	yes	|
+|	0x06	|	[add](#add)		|	yes	|
+|	0x07	|	[sub](#sub)		|	yes	|
+|	0x08	|	[mul](#mul)		|	yes	|
+|	0x09	|	[div](#div)		|	yes	|
+|	0x0a	|	[not](#not)		|	yes	|
+|	0x0b	|	[and](#and)		|	yes	|
+|	0x0c	|	[or](#or)		|	yes	|
+|	0x0d	|	[xor](#xor)		|	yes	|
+|	0x0e	|	[mod](#mod)		|	yes	|
+|	0x0f	|	[shr](#shr)		|	yes	|
+|	0x10	|	[shl](#shl)		|	yes	|
+|	0x11	|	[swp](#swp)		|	yes	|
+|	0x12	|	[zr](#zr)		|	yes	|
+|	0x13	|	[jz](#jz)		|	yes	|
+|	0x14	|	[smm](#smm)		|	stub	|
+|	0x15	|	[int](#int)		|	yes	|
+|	0x16	|	[jmp](#jmp)		|	yes	|
+|	0x17	|	[jmr](#jmr)		|	yes	|
+|	0x18	|	[jnz](#jnz)		|	yes	|
+|	0x19	|	[ret](#ret)		|	yes	|
+|	0x1a	|	[rti](#rti)		|	yes	|
+|	0x1b	|	[cpy](#cpy)		|	yes	|
+|	0x1c	|	[popi](#popi)	|	yes	|
+|	0x1d	|	undefined		|	-	|
+|	0x1e	|	undefined		|	-	|
+|	0x1f	|	undefined		|	-	|
 
-<!--
-table of contents:
- - [ADD](#add)
- - [AND](#and)
- - [CMP](#cmp) <! -- TODO: remove this -- >
- - [CPY](#cpy)
- - [DIV](#div)
- - [HALT](#halt)
- - [INT](#int)
- - [JMP](#jmp)
- - [JMR](#jmr)
- - [JNZ](#jnz)
- - [JZ](#jz) <! -- TODO: document this -- >
- - [LD](#ld)
- - [MOD](#mod)
- - [MOV](#mov)
- - [MUL](#mul)
- - [NOT](#not)
- - [OR](#or)
- - [POP](#pop)
- - [POPI](#popi)
- - [PUSH](#push)
- - [RET](#ret)
- - [RTI](#rti)
- - [SHL](#shl)
- - [SHR](#shr)
- - [SMM](#smm) <! -- TODO: document this -- >
- - [STR](#str)
- - [SUB](#sub)
- - [SWP](#swp)
- - [XOR](#xor)
- - [ZR](#zr)
--->
+<!-- TODO: remove cmp and flg -->
 
 ## ADD
 

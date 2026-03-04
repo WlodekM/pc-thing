@@ -1,7 +1,7 @@
 import { PC } from "./pc.ts";
 const pc = new PC()
 
-const commands = []
+const commands: string[] = []
 const commandData: Record<string, any> = {}
 
 const dir = Deno.readDirSync('instructions');
@@ -34,12 +34,15 @@ const code = object.code
 const offset = object.offset ?? 2**16 / 2
 
 const ram = []
+const trace: (string| number)[] = []
 
 const instructions = []
+const instr_trace: any[] = []
 
 for (const element of code) {
-    if (typeof element == 'number') {
-        instructions.push(element)
+	instr_trace.push(element)
+	if (typeof element == 'number') {
+		instructions.push(element)
         continue;
     }
     let byte_length = 1
@@ -117,12 +120,13 @@ for (const instr of instructions) {
     if (typeof instr == 'number') {
         // console.log(ram.length, instr, new Array<number>(instr).fill(0))
         ram.push(...new Array<number>(instr).fill(0))
+		trace.push(...new Array(instr).fill(instr_trace[i]))
         continue;
     }
     const [instr_id, ...raw_args] = instr;
     const args = parse_args(raw_args)
     //0bNO333222_111IIIII 0bA8887776_66555444
-    let opcode = instr_id & 0b11111
+    let opcode = (+instr_id) & 0b11111
     opcode = opcode | 0b1000_0000_0000_0000;
     let num_args = [];
     let arg_shift = 5;
@@ -163,6 +167,7 @@ for (const instr of instructions) {
     // console.log(instructionAddresses[i], (instructionAddresses[i] * 2).toString(16), commands[newInstr[0]], newInstr)
     //ram.push(...newInstr)
     ram.push(opcode, ...num_args)
+	trace.push(instr_trace[i], ...num_args.map<any>(_=>'* '+instr_trace[i]))
     i++
 }
 
@@ -174,4 +179,10 @@ for (const element of object.data) {
 
 Deno.writeFileSync(Deno.args[0] ?? 'iram.bin', Uint8Array.from(ram.map(a => [a & 0x00FF, (a & 0xFF00) >> 8]).flatMap(([a, b]) => [a, b])))
 
-console.log(instructionAddresses)
+console.log(`\x1b[92;20m${ram.map((v: number, i: number) => {
+	const s = String(v.toString(2).padStart(16,'0'))
+	return `${s.slice(0, 2)} ${s.slice(2, 5)} ${s.slice(5, 8)} ${s.slice(8, 11)} ${s.slice(11, 16)} \
+[0x${v.toString(16).padStart(4,'0')}] \
+(${v & 0x8000 ? pc.instructions[v & 0b11111] : '-'})\t{${v.toString().padStart(6, ' ')}}\t\
+<${trace[i]}>`
+}).join('\n')}\x1b[0m`)

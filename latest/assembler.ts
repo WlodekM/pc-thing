@@ -79,7 +79,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             acc.push(l)
             return acc
         }, [] as string[]);
-    const result: (string | number)[] = []
+    let result: (string | number)[] = []
 
     let i = offset;
     let li = 0;
@@ -98,7 +98,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             let tx = sel.join(' ');
             const pattern = /([A-z\-_0-9]+)\((.*?)\)\s*/g
             const match = [...tx.matchAll(pattern)][0]
-            tx = tx.replace(pattern, '').replaceAll('\\n', '\n');
+            tx = tx.replace(pattern, '').replaceAll('\\n', '\n').replaceAll(/\s+$/gm,'');
             if (!match) throw 'knives at you'
             const args = (match[2] ?? '').split(/,\s*/g);
             (t == '.macro' ?
@@ -117,6 +117,45 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         i++
     }
 
+	li = 0;
+	while (li < code.length) {
+        let el = code[li];
+        if (typeof el == 'number') {
+            // result.push(el);
+            li++;
+            continue;
+        }
+        let sel = el.split(' ');
+        li++;
+        if (sel[0] == '.macro' || sel[0] == '.amacro') {
+			console.log('deleteing macro thing at', li-1, sel)
+			code.splice(--li, 1)
+			// li--;
+            continue;
+        }
+        if (macros[sel[0]]) {
+			console.log('macro', sel[0])
+            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
+                el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
+            }
+            sel = el.split(' ')
+            const macro = macros[sel[0]]
+            sel.shift()
+			if (!macro) continue;
+            let rr = macro(sel)
+            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
+                rr = rr.replaceAll(label, labels[label])
+            }
+            const r = rr.split('\n')
+            // result.push(...r)
+			code.splice(li-1, 1, ...r)
+            i+=r.length
+            continue;
+        }
+	}
+
+	console.log(code)
+
     // parse other
     i = offset;
     li = 0;
@@ -130,9 +169,11 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         //console.log(li, sel, i)
         li++;
         if (el.endsWith(":")) {
+			const lname = sel[0].replace(/:$/g,'')
+			if (lname.startsWith('.')) continue;
             console.log(sel[0], i)
-            labels[sel[0].replace(/:$/g,'')] = '$'+i;
-            labels[`[${sel[0].replace(/:$/g,'')}]`] = `[${i}]`;
+            labels[lname] = '$'+i;
+            labels[`[${lname}]`] = `[${i}]`;
             continue;
         }
         if (sel[0] == '.aa') {
@@ -179,23 +220,11 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         let sel = el.split(' ');
         if (aliases[sel[0]]) el = el.replace(sel[0], aliases[sel[0]]);
         li++;
-        if (macros[sel[0]]) {
-            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-                el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
-            }
-            sel = el.split(' ')
-            const macro = macros[sel[0]]
-            sel.shift()
-            let rr = macro(sel)
-            for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-                rr = rr.replace(label, labels[label])
-            }
-            const r = rr.split('\n')
-            result.push(...r)
-            i+=r.length
-            continue;
-        }
         if (el.endsWith(":")) {
+            console.log(sel[0], i, 'local')
+			const lname = sel[0].replace(/:$/g,'')
+            labels[lname] = '$'+i;
+            labels[`[${lname}]`] = `[${i}]`;
             continue;
         }
         if (sel[0] == '.aa') {
@@ -270,6 +299,8 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         result.push(el.replace(/\$[0-9A-Fa-f]+/g, (_, addr) => addr))
         i++
     }
+	result = result.map(l => typeof l == 'string' ? l.trim() : l);
+	result = result.filter(l=>l !== '');
     return result
 }
 
