@@ -180,7 +180,7 @@ export class PC {
 	//		return true
 	//	}
 	//})
-	static regNames: string[] = ['a','b','c','d','sp','so','pp','fl']
+	static regNames: string[] = ['a','b','c','d','sp','so','fl','pp']
 	regNames: string[] = PC.regNames;
 	halted: boolean = false
 	//mem = new Array<number>(2**16).fill(0)
@@ -386,10 +386,10 @@ export class PC {
 
 	}
 	get programPointer(): number {
-		return this.registers[6]
+		return this.registers[7]
 	}
 	set programPointer(v: number) {
-		this.registers[6] = v
+		this.registers[7] = v
 	}
 	lib = lib
 	returnFlag = 0;

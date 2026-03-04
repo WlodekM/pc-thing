@@ -90,7 +90,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             li++;
             continue;
         }
-        const sel = el.split(' ');
+        const sel = el.split(/[ \t]/g);
         li++;
         if (sel[0] == '.macro' || sel[0] == '.amacro') {
         	const t = sel[0]
@@ -125,7 +125,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             li++;
             continue;
         }
-        let sel = el.split(' ');
+        let sel = el.split(/[ \t]/g);
         li++;
         if (sel[0] == '.macro' || sel[0] == '.amacro') {
 			console.log('deleteing macro thing at', li-1, sel)
@@ -136,9 +136,9 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
         if (macros[sel[0]]) {
 			console.log('macro', sel[0])
             for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-                el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
+                el = el.split(/[ \t]/g).map(a => a == label ? labels[label] : a).join(' ')
             }
-            sel = el.split(' ')
+            sel = el.split(/[ \t]/g)
             const macro = macros[sel[0]]
             sel.shift()
 			if (!macro) continue;
@@ -165,7 +165,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             li++;
             continue;
         }
-        const sel = el.split(' ');
+        const sel = el.split(/[ \t]/g);
         //console.log(li, sel, i)
         li++;
         if (el.endsWith(":")) {
@@ -181,7 +181,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             continue;
         }
         if (sel[0] == '.label') {
-            labels[sel[1]] = sel[2];
+			labels[sel[1]] = sel[2];
             continue;
         }
         if (macros[sel[0]]) {
@@ -217,7 +217,7 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             li++;
             continue;
         }
-        let sel = el.split(' ');
+        let sel = el.split(/[ \t]/g);
         if (aliases[sel[0]]) el = el.replace(sel[0], aliases[sel[0]]);
         li++;
         if (el.endsWith(":")) {
@@ -276,9 +276,9 @@ function processCode(rcode: string, offset: number = 0): (string | number)[] {
             continue;
         }
         for (const label of Object.keys(labels).sort((a, b) => b.length - a.length)) {
-            el = el.split(' ').map(a => a == label ? labels[label] : a).join(' ')
+            el = el.split(/[ \t]/g).map(a => a == label ? labels[label] : a).join(' ')
         }
-        const [cmd, ...args] = el.split(' ');
+        const [cmd, ...args] = el.split(/[ \t]/g);
         const argtypes = args.map((a: string) => {
             if (pc.regNames.includes(a)) return 'reg';
             if (a.match(/^\$[0-9A-Fa-f]+$/g)) return 'addr';

@@ -78,10 +78,11 @@ while (i < bin.length) {
 	let mask = 0b1110_0000;
 	let args = []
 	for (let j = 0; j < instruction_data.args; j++) {
-		const arg = (word & mask) >> offset;
-		if (arg < 0b100) {
-			decomp += `\t${'abcd'[arg]??`r${arg}`}`;
-			args.push('abcd'[arg]??`r${arg}`)
+		let arg = (word & mask) >> offset;
+		if (arg != 0b100) {
+			// if (arg >= 0b100) arg--;
+			decomp += `\t${pc.regNames[arg]??`r${arg}`}`;
+			args.push(pc.regNames[arg]??`r${arg}`)
 			offset += 3;
 			mask <<= 3;
 			continue;
