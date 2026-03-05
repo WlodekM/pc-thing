@@ -89,8 +89,8 @@ export default async function cli(runtime: Runtime, original_pointer: number, in
 		} else if (i[0] == 's'.charCodeAt(0)) {
 			console.log('stack:')
 
-			for (let i = 0; i < runtime.pc.getMem(0x7000); i++) {
-				const val = runtime.pc.getMem(0x01FF - i);
+			for (let i = 0; i < runtime.pc.registers[5]; i++) {
+				const val = runtime.pc.getMem(runtime.pc.registers[4]+i, true);
 				console.log(` ${i.toString(16).padStart(2, '0')} \
 ${val.toString(2).padStart(8, '0')} \
 (0x${val.toString(16).padStart(4, '0')} \
